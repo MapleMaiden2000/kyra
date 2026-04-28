@@ -8,6 +8,11 @@
 
 typedef enum Engine_Result {
     ENGINE_SUCCESS                                          = 0,
+        
+    ENGINE_HELPER_ERROR_REF_OUT_CONFIG_NULL                 = -1,
+    ENGINE_HELPER_ERROR_FAILED_TO_OPEN_CONFIG_FILE          = -2,
+    ENGINE_HELPER_ERROR_FAILED_TO_GET_FILE_SIZE             = -3,
+    ENGINE_HELPER_ERROR_FAILED_TO_CLOSE_CONFIG_FILE         = -4,
 
     // Pre-construct
     ENGINE_PRECONSTRUCT_ERROR_STATE_ALREADY_INITIALISED     = -100,
@@ -22,6 +27,14 @@ typedef enum Engine_Result {
     // Destruct
     ENGINE_DESTRUCT_ERROR_STATE_NOT_INITIALISED             = -300,
 } EngineResult;
+
+
+// Engine configurations ------------------------------------------------ //
+
+typedef struct Engine_Config {
+    Str     author;
+    Str     version;
+} EngineConfig;
 
 
 // API functions -------------------------------------------------------- //

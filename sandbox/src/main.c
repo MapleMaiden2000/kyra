@@ -6,15 +6,15 @@
 
 
 static void on_startup(Application *app) {
-    printf("Sandbox: Application '%s' startup completed.\n", app->name);
+    printf("Sandbox: Application startup completed.\n");
 }
 
 static void on_update(Application *app, float delta_time) {
-    printf("Sandbox: Application '%s' updated.\n", app->name);
+    printf("Sandbox: Application updated.\n");
 }
 
 static void on_shutdown(Application *app) {
-    printf("Sandbox: Application '%s' shutdown completed.\n", app->name);
+    printf("Sandbox: Application shutdown completed.\n");
 }
 
 
@@ -22,7 +22,11 @@ Application *application_create(ConstStr config_filepath) {
     if (!config_filepath) return NULL;
 
     static Application app;
-    app.name = "Sandbox App";
+
+    // Configure application
+    if (application_configure(config_filepath, &app.config) != APPLICATION_SUCCESS)
+        return NULL;
+
     app.on_startup = on_startup;
     app.on_update = on_update;
     app.on_shutdown = on_shutdown;

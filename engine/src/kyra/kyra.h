@@ -10,8 +10,10 @@
 // Shared configurations and Definitions
 #include "kyra/defines/shared.h"
 #include "kyra/defines/core/types.h"
+#include "kyra/defines/core/filesystem.h"
 
 // Core engine systems
+#include "kyra/core/platform/filesystem/filesystem.h"
 #include "kyra/core/engine/engine.h"
 
 // Application and Entry point

@@ -13,12 +13,12 @@ workspace "kyra"
     objdir ("out/int/%{cfg.buildcfg}/%{prj.name}")
 
     filter "configurations:Debug"
-        defines { "DEBUG", "KYRA_ENABLE_ASSERTIONS" }
+        defines { "KYRA_DEBUG", "KYRA_ENABLE_ASSERTIONS" }
         runtime "Debug"
         symbols "on"
 
     filter "configurations:Release"
-        defines { "NDEBUG" }
+        defines { "KYRA_RELEASE" }
         runtime "Release"
         optimize "on"
 
@@ -34,7 +34,8 @@ project "engine"
     staticruntime "on"
 
     defines { 
-        "KYRA_EXPORT", 
+        "KYRA_EXPORT",
+        "KYRA_LINE_MAX_LENGTH=1024",
     }    
 
     files {

@@ -52,10 +52,8 @@ echo [Make-Info] Executing: %MAKE_CMD% CC=gcc %*
 
 :: Report result
 if %ERRORLEVEL% equ 0 (
-    echo.
     echo [Make-Info] Build completed successfully.
 ) else (
-    echo.
     echo [Make-Error] Build failed with exit code %ERRORLEVEL%.
     exit /b %ERRORLEVEL%
 )
