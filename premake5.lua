@@ -1,0 +1,66 @@
+-- Kyra Workspace Configuration --
+
+workspace "kyra"
+    configurations { "Debug", "Release" }
+    platforms { "x64" }
+    architecture "x86_64"
+
+    toolset "gcc"
+    language "C"
+    cdialect "C11"
+
+    targetdir ("out/bin/%{cfg.buildcfg}")
+    objdir ("out/int/%{cfg.buildcfg}/%{prj.name}")
+
+    filter "configurations:Debug"
+        defines { "DEBUG", "KYRA_ENABLE_ASSERTIONS" }
+        runtime "Debug"
+        symbols "on"
+
+    filter "configurations:Release"
+        defines { "NDEBUG" }
+        runtime "Release"
+        optimize "on"
+
+    filter "platforms:x64"
+        buildoptions { "-mavx2", "-mfma" }
+
+
+-- Engine Project Configuration --    
+
+project "engine"
+    kind "SharedLib"
+    targetname "kyra_engine"
+    staticruntime "on"
+
+    defines { 
+        "KYRA_EXPORT", 
+    }    
+
+    files {
+        "engine/src/**.h",
+        "engine/src/**.c",
+    }
+
+    includedirs {
+        "engine/src",
+    }
+
+
+-- Sandbox Project Configuration --
+
+project "sandbox"
+    kind "ConsoleApp"
+    staticruntime "on"
+
+    files {
+        "sandbox/src/**.h",
+        "sandbox/src/**.c"
+    }
+
+    includedirs {
+        "engine/src",
+        "sandbox/src",
+    }
+
+    links { "engine" }

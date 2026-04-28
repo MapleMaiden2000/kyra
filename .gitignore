@@ -1,0 +1,17 @@
+# External tools and libraries
+external/
+
+# Build outputs
+out/
+
+# Visual Studio
+.vscode/
+.vs/
+*.sln
+*.vcxproj*
+
+# Makefiles
+*.make
+Makefile
+
+
