@@ -12,7 +12,8 @@
 // Engine state --------------------------------------------------------- //
 
 typedef struct Engine_State {
-    EngineConfig    config;
+    EngineConfig    engine_config;
+    MemoryConfig    memory_config;
 } EngineState;
 
 static EngineState *state = NULL;
@@ -20,8 +21,37 @@ static EngineState *state = NULL;
 
 // Helper functions ----------------------------------------------------- //
 
-EngineResult _engine_configure(ConstStr config_filepath, EngineConfig *out_config) {
-    if (!out_config) return ENGINE_HELPER_ERROR_REF_OUT_CONFIG_NULL;
+EngineResult _engine_parse_memory_size(ConstStr size_str, ByteSize *out_size) {
+    if (!size_str) return ENGINE_HELPER_ERROR_SIZE_STRING_NULL;
+
+    // Intepret value as float64
+    // Locate position after the value and save to 'end'
+    Str end = NULL;
+    Flt64 value = strtod(size_str, &end);
+
+    // Skip whitespace
+    while (*end == ' ') ++end;
+
+    Char unit[3] = {0};     // Extra character for null-terminator (_B + \0)
+    strncpy(unit, end, 2);  // Copy _B
+
+    // Convert to uppercase for uniformed parsing    
+    for (ByteSize index = 0; index < 2; ++index)
+        if (unit[index] >= 'a' && unit[index] <= 'z') unit[index] -= 32; 
+
+    // Convert to bytes
+    if (out_size) {
+        if (!strcmp(unit, "GB"))        *out_size = MEMORY_GB_TO_BYTES(value);
+        else if (!strcmp(unit, "MB"))   *out_size = MEMORY_MB_TO_BYTES(value);
+        else if (!strcmp(unit, "KB"))   *out_size = MEMORY_KB_TO_BYTES(value);
+        else if (!strcmp(unit, "B"))    *out_size = (ByteSize)value;
+    }
+
+    return ENGINE_SUCCESS;
+}
+
+EngineResult _engine_configure(ConstStr config_filepath) {
+    if (!config_filepath) return ENGINE_HELPER_ERROR_CONFIG_FILEPATH_NULL;
 
     FilesystemResult fs_result = 0; 
 
@@ -74,23 +104,60 @@ EngineResult _engine_configure(ConstStr config_filepath, EngineConfig *out_confi
     // Free data buffer
     free(buffer);
 
-
     // --- Info section --- //
-
-    cJSON *sect_info = cJSON_GetObjectItemCaseSensitive(json, "info");
-    if (sect_info) {
-        // Author
-        cJSON *sect_info_author = cJSON_GetObjectItemCaseSensitive(sect_info, "author");
-        if (cJSON_IsString(sect_info_author)) out_config->author = _strdup(sect_info_author->valuestring);
-        
-        // Version
-        cJSON *sect_info_ver = cJSON_GetObjectItemCaseSensitive(sect_info, "version");
-        if (cJSON_IsString(sect_info_ver)) out_config->version = _strdup(sect_info_ver->valuestring);
+    {
+        cJSON *info = cJSON_GetObjectItemCaseSensitive(json, "info");
+        if (info) {
+            // Author
+            cJSON *author = cJSON_GetObjectItemCaseSensitive(info, "author");
+            if (cJSON_IsString(author)) state->engine_config.author = _strdup(author->valuestring);
+            
+            // Version
+            cJSON *version = cJSON_GetObjectItemCaseSensitive(info, "version");
+            if (cJSON_IsString(version)) state->engine_config.version = _strdup(version->valuestring);
+        }
     }
 
+    // --- Memory section --- //
+    {
+        cJSON *memory = cJSON_GetObjectItemCaseSensitive(json, "memory");
+        
+        // Memory zones
+        cJSON *memory_zones = cJSON_GetObjectItemCaseSensitive(memory, "zones");
+        if (memory_zones) {
+            // Identify number of memory zones and allocate accordingly
+            state->memory_config.zone_count = (ByteSize)cJSON_GetArraySize(memory_zones);
+            state->memory_config.zones = malloc(sizeof(MemoryZoneConfig) * state->memory_config.zone_count);
+            
+            // Interate through each item inside 'memory/zones'
+            // Register name and capacity
+            cJSON *zone_item = NULL;
+            ByteSize index = 0;
+            cJSON_ArrayForEach(zone_item, memory_zones) {
+                MemoryZoneConfig *zone = &state->memory_config.zones[index++];
+                
+                // Zone name
+                zone->name = _strdup(zone_item->string);
 
-    printf("Author: %s\n", out_config->author);
-    printf("Version: %s\n", out_config->version);
+                // Zone capacity
+                ByteSize capacity = 0;
+                EngineResult parse_result = _engine_parse_memory_size(zone_item->valuestring, &capacity);
+                if (parse_result != ENGINE_SUCCESS) {
+                    // If failed to parse capacity...
+                    
+                    // Notify
+                    // Assign zone capacity as zero
+                    printf("Warn: Failed to parse capacity for memory zone: %s (Error: %d). Assigning capacity as zero...\n", zone->name, parse_result);
+                }
+                zone->capacity = capacity;
+
+                printf("Registered memory zone: %s (bytes: %llu).\n", zone->name, zone->capacity);
+            }
+        }
+    }
+
+    // Delete JSON
+    cJSON_Delete(json);
 
     return ENGINE_SUCCESS;
 }
@@ -109,7 +176,7 @@ KYRA_ENGINE_API EngineResult engine_preconstruct(ConstStr config_filepath) {
     memset(state, 0, sizeof(EngineState));
 
     // Configure the engine
-    EngineResult config_result = _engine_configure(config_filepath, &state->config);
+    EngineResult config_result = _engine_configure(config_filepath);
     if (config_result != ENGINE_SUCCESS) {
         // In case engine configuration failed...
 
@@ -150,8 +217,8 @@ KYRA_ENGINE_API EngineResult engine_destruct(void) {
     
     // Deallocate engine configuration properties
     {
-        free(state->config.author);
-        free(state->config.version);
+        free(state->engine_config.author);
+        free(state->engine_config.version);
     }
 
     // Deallocate engine state and set to NULL

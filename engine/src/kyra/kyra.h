@@ -11,6 +11,7 @@
 #include "kyra/defines/shared.h"
 #include "kyra/defines/core/types.h"
 #include "kyra/defines/core/filesystem.h"
+#include "kyra/defines/core/memory.h"
 
 // Core engine systems
 #include "kyra/core/platform/filesystem/filesystem.h"
