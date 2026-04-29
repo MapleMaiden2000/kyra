@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <cJSON.h>
+
 #include "kyra/core/platform/filesystem/filesystem.h"
 
 
@@ -31,8 +33,6 @@ EngineResult _engine_configure(ConstStr config_filepath, EngineConfig *out_confi
         return ENGINE_HELPER_ERROR_FAILED_TO_OPEN_CONFIG_FILE;
     }
 
-    printf("Config file - stream: %p\n", config_file.stream);
-
     // Get file size
     ByteSize file_size = 0;
     fs_result = platform_filesystem_file_size(&config_file, &file_size);
@@ -56,8 +56,6 @@ EngineResult _engine_configure(ConstStr config_filepath, EngineConfig *out_confi
     ByteSize bytes_read = 0;
     fs_result = platform_filesystem_read_all(&config_file, &bytes_read, &buffer);
 
-    printf("File data: %s\n", buffer);
-
     // Close the config file
     fs_result = platform_filesystem_file_close(&config_file);
     if (fs_result != FILESYSTEM_SUCCESS) {
@@ -66,8 +64,33 @@ EngineResult _engine_configure(ConstStr config_filepath, EngineConfig *out_confi
         return ENGINE_HELPER_ERROR_FAILED_TO_CLOSE_CONFIG_FILE;
     }
 
+    // Parse to JSON
+    cJSON *json = cJSON_Parse(buffer);    
+    if (!json) {
+        printf("Error: Failed to parse to JSON.\n");
+        return ENGINE_HELPER_ERROR_FAILED_TO_PARSE_TO_JSON;
+    }
+
     // Free data buffer
     free(buffer);
+
+
+    // --- Info section --- //
+
+    cJSON *sect_info = cJSON_GetObjectItemCaseSensitive(json, "info");
+    if (sect_info) {
+        // Author
+        cJSON *sect_info_author = cJSON_GetObjectItemCaseSensitive(sect_info, "author");
+        if (cJSON_IsString(sect_info_author)) out_config->author = _strdup(sect_info_author->valuestring);
+        
+        // Version
+        cJSON *sect_info_ver = cJSON_GetObjectItemCaseSensitive(sect_info, "version");
+        if (cJSON_IsString(sect_info_ver)) out_config->version = _strdup(sect_info_ver->valuestring);
+    }
+
+
+    printf("Author: %s\n", out_config->author);
+    printf("Version: %s\n", out_config->version);
 
     return ENGINE_SUCCESS;
 }
@@ -125,6 +148,13 @@ KYRA_ENGINE_API EngineResult engine_destruct(void) {
 
     printf("Destructing engine...\n");
     
+    // Deallocate engine configuration properties
+    {
+        free(state->config.author);
+        free(state->config.version);
+    }
+
+    // Deallocate engine state and set to NULL
     free(state);
     state = NULL;
 

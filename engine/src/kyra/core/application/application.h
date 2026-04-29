@@ -13,6 +13,8 @@ typedef enum Application_Result {
     APPLICATION_ERROR_FAILED_TO_OPEN_CONFIG_FILE                = -2,
     APPLICATION_ERROR_FAILED_TO_GET_FILE_SIZE                   = -3,
     APPLICATION_ERROR_FAILED_TO_CLOSE_CONFIG_FILE               = -4,
+    APPLICATION_ERROR_FAILED_TO_PARSE_TO_JSON                   = -5,
+
 } ApplicationResult;
 
 

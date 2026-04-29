@@ -41,10 +41,13 @@ project "engine"
     files {
         "engine/src/**.h",
         "engine/src/**.c",
+        "external/cjson/cJSON.c",
+        "external/cjson/cJSON.h"
     }
 
     includedirs {
         "engine/src",
+        "external/cjson"
     }
 
 

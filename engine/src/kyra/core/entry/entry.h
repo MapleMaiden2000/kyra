@@ -2,6 +2,8 @@
 
 #include "kyra/kyra.h"
 
+#include <stdlib.h>
+
 
 Int32 main(Int32 argc, Int32 argv) {
     EngineResult engine_result;
@@ -46,6 +48,11 @@ Int32 main(Int32 argc, Int32 argv) {
 
         // Shutdown stage
         if (app->on_shutdown) app->on_shutdown(app);
+
+        // Deallocate application configuration properties
+        {
+            free(app->config.name);
+        }
     }
 
     // Engine shutdown

@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <cJSON.h>
+
 #include "kyra/core/platform/filesystem/filesystem.h"
 
 
@@ -45,8 +47,6 @@ KYRA_ENGINE_API ApplicationResult application_configure(ConstStr config_filepath
     ByteSize bytes_read = 0;
     fs_result = platform_filesystem_read_all(&config_file, &bytes_read, &buffer);
 
-    printf("File data: %s\n", buffer);
-
     // Close the config file
     fs_result = platform_filesystem_file_close(&config_file);
     if (fs_result != FILESYSTEM_SUCCESS) {
@@ -55,8 +55,27 @@ KYRA_ENGINE_API ApplicationResult application_configure(ConstStr config_filepath
         return APPLICATION_ERROR_FAILED_TO_CLOSE_CONFIG_FILE;
     }
 
+    // Parse to JSON
+    cJSON *json = cJSON_Parse(buffer);    
+    if (!json) {
+        printf("Error: Failed to parse to JSON.\n");
+        return APPLICATION_ERROR_FAILED_TO_PARSE_TO_JSON;
+    }
+
     // Free data buffer
     free(buffer);
+
+
+    // --- Info section --- //
+    
+    cJSON *sect_info = cJSON_GetObjectItemCaseSensitive(json, "info");
+    if (sect_info) {
+        // Application name
+        cJSON *sect_info_name = cJSON_GetObjectItemCaseSensitive(sect_info, "name");
+        if (cJSON_IsString(sect_info_name)) out_config->name = _strdup(sect_info_name->valuestring);
+    }
+
+    printf("Application name: %s\n", out_config->name);
 
     return APPLICATION_SUCCESS;
 }

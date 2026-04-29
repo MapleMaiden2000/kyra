@@ -1,3 +1,5 @@
 {
-    "name": "Sandbox App"
+    "info": {
+        "name": "Sandbox App"
+    }
 }
