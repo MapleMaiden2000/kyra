@@ -101,9 +101,8 @@ KYRA_ENGINE_API MemoryZoneResult memory_zone_clear(ConstStr name) {
     for (ByteSize index = 0; index < zone->num_classes; ++index) {
         // For each size class...
 
-        // Reset 'blocks' and 'num_blocks'
-        zone->size_classes[index].blocks = NULL;
-        zone->size_classes[index].num_blocks = 0;
+        // Reset 'free_list_head'
+        zone->size_classes[index].free_list_head = NULL;
     }
     
     // Update 'used_memory' for manager
@@ -146,12 +145,23 @@ KYRA_ENGINE_API MemoryZoneResult memory_zone_allocate(ConstStr name, const ByteS
     MemoryZoneSizeClass *size_class = &zone->size_classes[index];
 
     // Allocate from stack of free blocks if available
-    if (size_class->num_blocks > 0) {
-        if (out_addr)           *out_addr = size_class->blocks[--size_class->num_blocks];
+    if (size_class->free_list_head != NULL) {
+        // Get the free block, aka. head of the free list for this size class 
+        VoidPtr free_block = size_class->free_list_head;
+
+        // Read the pointer stored inside that block to find the next free block
+        VoidPtr *next_free_node = (VoidPtr *)free_block;
+
+        // Update the head to point to the next block
+        size_class->free_list_head = *next_free_node;
+
+        // Save to refs
+        if (out_addr)           *out_addr = free_block;
         if (out_alloc_size)     *out_alloc_size = size_class->size;
 
-        // Update 'used memory'
+        // Update the 'used_memory' for zone and manager
         zone->used_memory += size_class->size;
+        manager->used_memory += size_class->size;
 
         return MEMORY_ZONE_SUCCESS;
     }
@@ -203,23 +213,15 @@ KYRA_ENGINE_API MemoryZoneResult memory_zone_deallocate(ConstStr name, const Voi
     }
     MemoryZoneSizeClass *size_class = &zone->size_classes[index];
 
-    // Check if stack of free blocks is full and need to be resized
-    if (size_class->num_blocks == size_class->capacity) {
-        // Default to 16 if size class has no capacity
-        ByteSize new_capacity = (size_class->capacity == 0) ? 16 : (ByteSize)((Flt32)size_class->capacity * ratio);
-    
-        // Resize stack
-        VoidPtr *new_blocks = realloc(size_class->blocks, (new_capacity + 1) * sizeof(VoidPtr));
-        if (!new_blocks) return MEMORY_ZONE_ERROR_FAILED_TO_RESIZE_SIZE_CLASS;
+    // Make freed address to be pointer of itself as the 'freed address' node
+    VoidPtr *next_free_node = (VoidPtr *)addr;
 
-        // Update size class properties
-        size_class->blocks = new_blocks;
-        size_class->capacity = new_capacity;
-    }
+    // Write the current free list head directly into the freed block memory 
+    *next_free_node = size_class->free_list_head;
 
-    // Add block to the stack
-    size_class->blocks[size_class->num_blocks++] = addr;
-    
+    // The freed address is now new head of the free list
+    size_class->free_list_head = addr;
+
     // Update 'used memory' for both zone and manager
     zone->used_memory -= size_class->size;
     manager->used_memory -= size_class->size;

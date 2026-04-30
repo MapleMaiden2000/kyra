@@ -134,14 +134,6 @@ KYRA_ENGINE_API MemoryManagerResult memory_manager_shutdown(void) {
         // For each memory zone...
         MemoryZone *zone = &memory_manager->zones[index];
 
-        for (ByteSize sc_index = 0; sc_index < zone->num_classes; ++sc_index) {
-            // For each size class...
-            MemoryZoneSizeClass *size_class = &zone->size_classes[sc_index];
-
-            // Deallocate size class blocks
-            if (size_class->num_blocks > 0) free(size_class->blocks);
-        }
-        
         // Deallocate name
         if (zone->name) free((VoidPtr)zone->name);
     }

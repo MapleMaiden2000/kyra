@@ -52,11 +52,8 @@ typedef struct Memory_Config {
 // Types ---------------------------------------------------------------- //
 
 typedef struct Memory_Zone_Size_Class {
-    VoidPtr                *blocks;
-    ByteSize                num_blocks;
-
     ByteSize                size;
-    ByteSize                capacity;
+    VoidPtr                 free_list_head;
 } MemoryZoneSizeClass;
 
 typedef struct Memory_Zone {

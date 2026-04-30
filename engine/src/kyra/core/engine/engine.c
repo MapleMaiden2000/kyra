@@ -221,8 +221,9 @@ KYRA_ENGINE_API EngineResult engine_update(Flt32 delta_time) {
     if (!state) return ENGINE_UPDATE_ERROR_STATE_NOT_INITIALISED;
     
     printf("Updating engine...\n");
-
+        
     memory_manager_report();
+
 
     return ENGINE_SUCCESS;
 }
