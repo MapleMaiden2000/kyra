@@ -57,7 +57,7 @@ typedef const char     *ConstStr;
 // Memory types --------------------------------------------------------- //
 
 typedef size_t          ByteSize;
-typedef int8_t         *BytePtr;
+typedef uint8_t        *BytePtr;
 typedef void           *VoidPtr;
 typedef size_t         *SizePtr;
 typedef uintptr_t       UIntPtr;

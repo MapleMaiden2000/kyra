@@ -6,12 +6,19 @@
 // Return codes --------------------------------------------------------- //
 
 typedef enum Memory_Manager_Result {
-    MEMORY_MANAGER_SUCCESS                              = 0
+    MEMORY_MANAGER_SUCCESS                                  = 0,
+
+    MEMORY_MANAGER_ERROR_MEMORY_CONFIG_NULL                 = -1,
+    MEMORY_MANAGER_ERROR_STATE_ALREADY_INITIALISED          = -2,
+    MEMORY_MANAGER_ERROR_STATE_NOT_INITIALISED              = -3,
+    MEMORY_MANAGER_ERROR_FAILED_TO_ALLOCATE_MEMORY_BLOCK    = -4,
+
+    MEMORY_MANAGER_HELPER_ERROR_CAPACITY_ZERO               = -100
     
 } MemoryManagerResult;
 
 typedef enum Memory_Zone_Result {
-    MEMORY_ZONE_SUCCESS                                 = 0
+    MEMORY_ZONE_SUCCESS                                     = 0
     
 } MemoryZoneResult;
 

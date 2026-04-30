@@ -36,6 +36,7 @@ project "engine"
     defines { 
         "KYRA_EXPORT",
         "KYRA_LINE_MAX_LENGTH=1024",
+        "KYRA_MEMORY_ALIGNMENT_SIZE=16",
     }    
 
     files {

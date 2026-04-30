@@ -464,10 +464,11 @@ KYRA_ENGINE_API FilesystemResult platform_filesystem_directory_exists(ConstStr p
     return FILESYSTEM_SUCCESS;
 }
 
-KYRA_ENGINE_API ConstStr platform_filesystem_result_to_string(FilesystemResult result) {
+KYRA_ENGINE_API ConstStr platform_filesystem_result_to_string(const FilesystemResult result) {
     switch (result) {
         case FILESYSTEM_SUCCESS:                  					return "FILESYSTEM_SUCCESS";
-	    case FILESYSTEM_ERROR_REF_OUT_FILE_NULL:					return "FILESYSTEM_ERROR_REF_OUT_FILE_NULL";
+	    
+        case FILESYSTEM_ERROR_REF_OUT_FILE_NULL:					return "FILESYSTEM_ERROR_REF_OUT_FILE_NULL";
 	    case FILESYSTEM_ERROR_FILEPATH_NULL:						return "FILESYSTEM_ERROR_FILEPATH_NULL";
 	    case FILESYSTEM_ERROR_FILE_ALREADY_OPEN:					return "FILESYSTEM_ERROR_FILE_ALREADY_OPEN";
 	    case FILESYSTEM_ERROR_FILE_NULL:							return "FILESYSTEM_ERROR_FILE_NULL";
@@ -498,6 +499,7 @@ KYRA_ENGINE_API ConstStr platform_filesystem_result_to_string(FilesystemResult r
 	    case FILESYSTEM_ERROR_REF_OUT_DIRECTORY_NULL:				return "FILESYSTEM_ERROR_REF_OUT_DIRECTORY_NULL";
 	    case FILESYSTEM_ERROR_NO_EXTENSION_FOUND:					return "FILESYSTEM_ERROR_NO_EXTENSION_FOUND";
 	    case FILESYSTEM_ERROR_INVALID_SEEK_POSITION:				return "FILESYSTEM_ERROR_INVALID_SEEK_POSITION";
+        
         default:                                                    return "UNKNOWN_FILESYSTEM_RESULT";
     }
 }

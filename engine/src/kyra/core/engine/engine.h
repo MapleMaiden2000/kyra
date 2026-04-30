@@ -9,7 +9,8 @@
 
 typedef enum Engine_Result {
     ENGINE_SUCCESS                                          = 0,
-        
+    
+    // Helper
     ENGINE_HELPER_ERROR_CONFIG_FILEPATH_NULL                = -1,
     ENGINE_HELPER_ERROR_FAILED_TO_OPEN_CONFIG_FILE          = -2,
     ENGINE_HELPER_ERROR_FAILED_TO_GET_FILE_SIZE             = -3,
@@ -28,7 +29,8 @@ typedef enum Engine_Result {
     ENGINE_UPDATE_ERROR_STATE_NOT_INITIALISED               = -300,
     
     // Destruct
-    ENGINE_DESTRUCT_ERROR_STATE_NOT_INITIALISED             = -300,
+    ENGINE_DESTRUCT_ERROR_STATE_NOT_INITIALISED             = -400,
+    
 } EngineResult;
 
 
@@ -46,4 +48,6 @@ KYRA_ENGINE_API EngineResult    engine_preconstruct(ConstStr config_filepath);
 KYRA_ENGINE_API EngineResult    engine_construct(void);
 KYRA_ENGINE_API EngineResult    engine_update(Flt32 delta_time);
 KYRA_ENGINE_API EngineResult    engine_destruct(void);
+
+KYRA_ENGINE_API ConstStr        engine_result_to_string(const EngineResult result);
 

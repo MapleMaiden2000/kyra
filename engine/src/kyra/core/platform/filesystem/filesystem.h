@@ -33,6 +33,6 @@ KYRA_ENGINE_API FilesystemResult    platform_filesystem_create_directory(ConstSt
 KYRA_ENGINE_API FilesystemResult    platform_filesystem_remove_directory(ConstStr path);
 KYRA_ENGINE_API FilesystemResult    platform_filesystem_directory_exists(ConstStr path, Bool *out_exists);
 
-KYRA_ENGINE_API ConstStr            platform_filesystem_result_to_string(FilesystemResult result);
+KYRA_ENGINE_API ConstStr            platform_filesystem_result_to_string(const FilesystemResult result);
 
 
