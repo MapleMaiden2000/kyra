@@ -16,6 +16,7 @@
 // Core engine systems
 #include "kyra/core/platform/filesystem/filesystem.h"
 #include "kyra/core/memory/manager/memory_manager.h"
+#include "kyra/core/memory/zone/memory_zone.h"
 #include "kyra/core/engine/engine.h"
 
 // Application and Entry point

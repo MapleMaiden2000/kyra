@@ -6,7 +6,7 @@
     
     "memory": {
         "zones": {
-            "core": "4 MB"
+            "string": "4 MB"
         }
     }
 }

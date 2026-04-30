@@ -18,7 +18,20 @@ typedef enum Memory_Manager_Result {
 } MemoryManagerResult;
 
 typedef enum Memory_Zone_Result {
-    MEMORY_ZONE_SUCCESS                                     = 0
+    MEMORY_ZONE_SUCCESS                                     = 0,
+
+    MEMORY_ZONE_ERROR_ZONE_NAME_NULL                        = -1,
+    MEMORY_ZONE_ERROR_SIZE_ZERO                             = -2,
+    MEMORY_ZONE_ERROR_INVALID_ADDRESS                       = -3,
+    MEMORY_ZONE_ERROR_FAILED_TO_GET_MEMORY_MANAGER          = -4,
+    MEMORY_ZONE_ERROR_FAILED_TO_LOCATE_ZONE                 = -5,
+    MEMORY_ZONE_ERROR_FAILED_TO_GET_SIZE_CLASS_INDEX        = -6,
+    MEMORY_ZONE_ERROR_FAILED_TO_RESIZE_SIZE_CLASS           = -7,
+    MEMORY_ZONE_ERROR_INSUFFICIENT_MEMORY_TO_ALLOCATE       = -8,
+
+    MEMORY_ZONE_HELPER_ERROR_ZONE_NULL                      = -100,
+    MEMORY_ZONE_HELPER_ERROR_SIZE_ZERO                      = -101
+
     
 } MemoryZoneResult;
 

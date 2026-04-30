@@ -87,7 +87,7 @@ KYRA_ENGINE_API MemoryManagerResult memory_manager_startup(const MemoryConfig *c
     memory_manager->zones = (MemoryZone *)(block + manager_size);
     memory_manager->zone_count = config->zone_count;
     memory_manager->capacity = total_capacity;
-    memory_manager->pool = (VoidPtr)(block + manager_size + zone_headers_size);
+    memory_manager->pool = (VoidPtr)(block + manager_size + zone_headers_size + size_class_headers_size);
 
     // Configure memory zones
     UIntPtr addr_block = (UIntPtr)memory_manager->pool;
@@ -139,7 +139,7 @@ KYRA_ENGINE_API MemoryManagerResult memory_manager_shutdown(void) {
             MemoryZoneSizeClass *size_class = &zone->size_classes[sc_index];
 
             // Deallocate size class blocks
-            if (size_class->blocks) free(size_class->blocks);
+            if (size_class->num_blocks > 0) free(size_class->blocks);
         }
         
         // Deallocate name
@@ -153,11 +153,11 @@ KYRA_ENGINE_API MemoryManagerResult memory_manager_shutdown(void) {
     return MEMORY_MANAGER_SUCCESS;
 }
 
-KYRA_ENGINE_API MemoryManagerResult memory_manager_get(MemoryManager *out_manager) {
+KYRA_ENGINE_API MemoryManagerResult memory_manager_get(MemoryManager **out_manager) {
     if (!memory_manager) return MEMORY_MANAGER_ERROR_STATE_NOT_INITIALISED;
     
     // Save to ref
-    if (out_manager) memcpy(out_manager, memory_manager, sizeof(MemoryManager));
+    if (out_manager) *out_manager = memory_manager;
     
     return MEMORY_MANAGER_SUCCESS;
 }
