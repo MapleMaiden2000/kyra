@@ -219,3 +219,20 @@ KYRA_ENGINE_API ConsoleResult console_format_strike(void) {
     return CONSOLE_SUCCESS;
 }
 
+
+// -- Result to string -- //
+
+KYRA_ENGINE_API ConstStr console_result_to_string(const ConsoleResult result) {
+    switch (result) {
+        case CONSOLE_SUCCESS:                           return "CONSOLE_SUCCESS";
+
+        case CONSOLE_ERROR_ALREADY_INITIALISED:         return "CONSOLE_ERROR_ALREADY_INITIALISED";
+        case CONSOLE_ERROR_NOT_INITIALISED:             return "CONSOLE_ERROR_NOT_INITIALISED";
+        case CONSOLE_ERROR_FAILED_TO_GET_HANDLES:       return "CONSOLE_ERROR_FAILED_TO_GET_HANDLES";
+        case CONSOLE_ERROR_FAILED_TO_GET_MODES:         return "CONSOLE_ERROR_FAILED_TO_GET_MODES";
+        case CONSOLE_ERROR_FAILED_TO_SET_MODES:         return "CONSOLE_ERROR_FAILED_TO_SET_MODES";
+    
+        default:                                        return "UNKNOWN_CONSOLE_RESULT";
+    }
+}
+

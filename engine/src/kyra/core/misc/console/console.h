@@ -37,6 +37,11 @@ KYRA_ENGINE_API ConsoleResult   console_format_reverse(void);
 KYRA_ENGINE_API ConsoleResult   console_format_strike(void);
 
 
+// -- Result to string -- //
+
+KYRA_ENGINE_API ConstStr        console_result_to_string(const ConsoleResult result);
+
+
 // Universal colour printing ------------------------------------ //
 
 // Console print with foreground colour
