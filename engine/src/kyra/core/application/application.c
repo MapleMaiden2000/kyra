@@ -7,6 +7,7 @@
 #include <cJSON.h>
 
 #include "kyra/core/platform/filesystem/filesystem.h"
+#include "kyra/core/misc/console/console.h"
 
 
 // API functions -------------------------------------------------------- //
@@ -20,7 +21,7 @@ KYRA_ENGINE_API ApplicationResult application_configure(ConstStr config_filepath
     File config_file = {0};
     fs_result = platform_filesystem_file_open(config_filepath, FILESYSTEM_IO_MODE_READ, FILESYSTEM_FILE_MODE_BINARY, &config_file);
     if (fs_result != FILESYSTEM_SUCCESS) {
-        printf("Error: Failed to open config file: %s (Error: %s)\n", config_filepath, platform_filesystem_result_to_string(fs_result));
+        KYRA_PRINT_ERROR("Failed to open config file: %s (Error: %s)", config_filepath, platform_filesystem_result_to_string(fs_result));
         return APPLICATION_ERROR_FAILED_TO_OPEN_CONFIG_FILE;
     }
 
@@ -28,7 +29,7 @@ KYRA_ENGINE_API ApplicationResult application_configure(ConstStr config_filepath
     ByteSize file_size = 0;
     fs_result = platform_filesystem_file_size(&config_file, &file_size);
     if (fs_result != FILESYSTEM_SUCCESS) {
-        printf("Error: Failed to get size of file: %s (Error: %s)\n", config_filepath, platform_filesystem_result_to_string(fs_result));
+        KYRA_PRINT_ERROR("Failed to get size of file: %s (Error: %s)", config_filepath, platform_filesystem_result_to_string(fs_result));
         return APPLICATION_ERROR_FAILED_TO_GET_FILE_SIZE;
     }
 
@@ -38,7 +39,7 @@ KYRA_ENGINE_API ApplicationResult application_configure(ConstStr config_filepath
         // If data buffer failed to allocate, close the config file
         fs_result = platform_filesystem_file_close(&config_file);
         if (fs_result != FILESYSTEM_SUCCESS) {
-            printf("Error: Failed to close file: %s (Error: %s)\n", config_filepath, platform_filesystem_result_to_string(fs_result));
+            KYRA_PRINT_ERROR("Failed to close file: %s (Error: %s)", config_filepath, platform_filesystem_result_to_string(fs_result));
             return APPLICATION_ERROR_FAILED_TO_CLOSE_CONFIG_FILE;
         }
     }
@@ -51,14 +52,14 @@ KYRA_ENGINE_API ApplicationResult application_configure(ConstStr config_filepath
     fs_result = platform_filesystem_file_close(&config_file);
     if (fs_result != FILESYSTEM_SUCCESS) {
         free(buffer);
-        printf("Error: Failed to close file: %s (Error: %s)\n", config_filepath, platform_filesystem_result_to_string(fs_result));
+        KYRA_PRINT_ERROR("Failed to close file: %s (Error: %s)", config_filepath, platform_filesystem_result_to_string(fs_result));
         return APPLICATION_ERROR_FAILED_TO_CLOSE_CONFIG_FILE;
     }
 
     // Parse to JSON
     cJSON *json = cJSON_Parse(buffer);    
     if (!json) {
-        printf("Error: Failed to parse to JSON.\n");
+        KYRA_PRINT_ERROR("Failed to parse to JSON.");
         return APPLICATION_ERROR_FAILED_TO_PARSE_TO_JSON;
     }
 
@@ -75,7 +76,7 @@ KYRA_ENGINE_API ApplicationResult application_configure(ConstStr config_filepath
         if (cJSON_IsString(sect_info_name)) out_config->name = _strdup(sect_info_name->valuestring);
     }
 
-    printf("Application name: %s\n", out_config->name);
+    KYRA_PRINT_INFO("Application name: %s", out_config->name);
 
     return APPLICATION_SUCCESS;
 }

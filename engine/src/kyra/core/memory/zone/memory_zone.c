@@ -6,6 +6,7 @@
 #include <math.h>
 
 #include "kyra/core/memory/manager/memory_manager.h"
+#include "kyra/core/misc/console/console.h"
 
 
 // Helper functions --------------------------------------------------------- //
@@ -57,7 +58,7 @@ KYRA_ENGINE_API MemoryZoneResult memory_zone_get(ConstStr name, MemoryZone **out
     {
         MemoryManagerResult get_result = memory_manager_get(&manager);
         if (get_result != MEMORY_MANAGER_SUCCESS) {
-            printf("Error: Failed to get memory manager (Error: %s).\n", memory_manager_result_to_string(get_result));
+            KYRA_PRINT_ERROR("Failed to get memory manager (Error: %s).", memory_manager_result_to_string(get_result));
             return MEMORY_ZONE_ERROR_FAILED_TO_GET_MEMORY_MANAGER;
         }
     }
@@ -86,7 +87,7 @@ KYRA_ENGINE_API MemoryZoneResult memory_zone_clear(ConstStr name) {
     {
         MemoryManagerResult get_result = memory_manager_get(&manager);
         if (get_result != MEMORY_MANAGER_SUCCESS) {
-            printf("Error: Failed to get memory manager (Error: %s).\n", memory_manager_result_to_string(get_result));
+            KYRA_PRINT_ERROR("Failed to get memory manager (Error: %s).", memory_manager_result_to_string(get_result));
             return MEMORY_ZONE_ERROR_FAILED_TO_GET_MEMORY_MANAGER;
         }
     }
@@ -123,7 +124,7 @@ KYRA_ENGINE_API MemoryZoneResult memory_zone_allocate(ConstStr name, const ByteS
     {
         MemoryManagerResult get_result = memory_manager_get(&manager);
         if (get_result != MEMORY_MANAGER_SUCCESS) {
-            printf("Error: Failed to get memory manager (Error: %s).\n", memory_manager_result_to_string(get_result));
+            KYRA_PRINT_ERROR("Failed to get memory manager (Error: %s).", memory_manager_result_to_string(get_result));
             return MEMORY_ZONE_ERROR_FAILED_TO_GET_MEMORY_MANAGER;
         }
     }
@@ -139,7 +140,7 @@ KYRA_ENGINE_API MemoryZoneResult memory_zone_allocate(ConstStr name, const ByteS
     ByteSize index = 0;
     MemoryZoneResult index_result = _memory_zone_size_class_index(zone, size, &index);
     if (index_result != MEMORY_ZONE_SUCCESS) {
-        printf("Error: Failed to get size class index (Error: %s).\n", memory_manager_result_to_string(index_result));
+        KYRA_PRINT_ERROR("Failed to get size class index (Error: %s).", memory_manager_result_to_string(index_result));
         return MEMORY_ZONE_ERROR_FAILED_TO_GET_SIZE_CLASS_INDEX;
     }
     MemoryZoneSizeClass *size_class = &zone->size_classes[index];
@@ -192,7 +193,7 @@ KYRA_ENGINE_API MemoryZoneResult memory_zone_deallocate(ConstStr name, const Voi
     {
         MemoryManagerResult get_result = memory_manager_get(&manager);
         if (get_result != MEMORY_MANAGER_SUCCESS) {
-            printf("Error: Failed to get memory manager (Error: %s).\n", memory_manager_result_to_string(get_result));
+            KYRA_PRINT_ERROR("Failed to get memory manager (Error: %s).", memory_manager_result_to_string(get_result));
             return MEMORY_ZONE_ERROR_FAILED_TO_GET_MEMORY_MANAGER;
         }
     }
@@ -208,7 +209,7 @@ KYRA_ENGINE_API MemoryZoneResult memory_zone_deallocate(ConstStr name, const Voi
     ByteSize index = 0;
     MemoryZoneResult index_result = _memory_zone_size_class_index(zone, size, &index);
     if (index_result != MEMORY_ZONE_SUCCESS) {
-        printf("Error: Failed to get size class index (Error: %s).\n", memory_manager_result_to_string(index_result));
+        KYRA_PRINT_ERROR("Failed to get size class index (Error: %s).", memory_manager_result_to_string(index_result));
         return MEMORY_ZONE_ERROR_FAILED_TO_GET_SIZE_CLASS_INDEX;
     }
     MemoryZoneSizeClass *size_class = &zone->size_classes[index];

@@ -9,6 +9,7 @@
 #include "kyra/core/platform/filesystem/filesystem.h"
 #include "kyra/core/memory/manager/memory_manager.h"
 #include "kyra/core/memory/zone/memory_zone.h"
+#include "kyra/core/misc/console/console.h"
 
 
 // Engine state --------------------------------------------------------- //
@@ -61,7 +62,7 @@ EngineResult _engine_configure(ConstStr config_filepath) {
     File config_file = {0};
     fs_result = platform_filesystem_file_open(config_filepath, FILESYSTEM_IO_MODE_READ, FILESYSTEM_FILE_MODE_BINARY, &config_file);
     if (fs_result != FILESYSTEM_SUCCESS) {
-        printf("Error: Failed to open config file: %s (Error: %s)\n", config_filepath, platform_filesystem_result_to_string(fs_result));
+        KYRA_PRINT_ERROR("Failed to open config file: %s (Error: %s)", config_filepath, platform_filesystem_result_to_string(fs_result));
         return ENGINE_HELPER_ERROR_FAILED_TO_OPEN_CONFIG_FILE;
     }
 
@@ -69,7 +70,7 @@ EngineResult _engine_configure(ConstStr config_filepath) {
     ByteSize file_size = 0;
     fs_result = platform_filesystem_file_size(&config_file, &file_size);
     if (fs_result != FILESYSTEM_SUCCESS) {
-        printf("Error: Failed to get size of file: %s (Error: %s)\n", config_filepath, platform_filesystem_result_to_string(fs_result));
+        KYRA_PRINT_ERROR("Failed to get size of file: %s (Error: %s)", config_filepath, platform_filesystem_result_to_string(fs_result));
         return ENGINE_HELPER_ERROR_FAILED_TO_GET_FILE_SIZE;
     }
 
@@ -79,7 +80,7 @@ EngineResult _engine_configure(ConstStr config_filepath) {
         // If data buffer failed to allocate, close the config file
         fs_result = platform_filesystem_file_close(&config_file);
         if (fs_result != FILESYSTEM_SUCCESS) {
-            printf("Error: Failed to close file: %s (Error: %s)\n", config_filepath, platform_filesystem_result_to_string(fs_result));
+            KYRA_PRINT_ERROR("Failed to close file: %s (Error: %s)", config_filepath, platform_filesystem_result_to_string(fs_result));
             return ENGINE_HELPER_ERROR_FAILED_TO_CLOSE_CONFIG_FILE;
         }
     }
@@ -92,14 +93,14 @@ EngineResult _engine_configure(ConstStr config_filepath) {
     fs_result = platform_filesystem_file_close(&config_file);
     if (fs_result != FILESYSTEM_SUCCESS) {
         free(buffer);
-        printf("Error: Failed to close file: %s (Error: %s)\n", config_filepath, platform_filesystem_result_to_string(fs_result));
+        KYRA_PRINT_ERROR("Failed to close file: %s (Error: %s)", config_filepath, platform_filesystem_result_to_string(fs_result));
         return ENGINE_HELPER_ERROR_FAILED_TO_CLOSE_CONFIG_FILE;
     }
 
     // Parse to JSON
     cJSON *json = cJSON_Parse(buffer);    
     if (!json) {
-        printf("Error: Failed to parse to JSON.\n");
+        KYRA_PRINT_ERROR("Failed to parse to JSON.");
         return ENGINE_HELPER_ERROR_FAILED_TO_PARSE_TO_JSON;
     }
 
@@ -147,17 +148,17 @@ EngineResult _engine_configure(ConstStr config_filepath) {
                 if (parse_result != ENGINE_SUCCESS) {
                     // If failed to parse capacity...
                     
-                    // Notify
+                    // Notify a warning
                     // Assign zone capacity as zero
-                    printf(
-                        "Warn: Failed to parse capacity for memory zone: %s (Error: %s). Assigning capacity as zero...\n", 
+                    KYRA_PRINT_WARN(
+                        "Failed to parse capacity for memory zone: %s (Error: %s). Assigning capacity as zero...", 
                         zone->name, 
                         engine_result_to_string(parse_result)
                     );
                 }
                 zone->capacity = capacity;
 
-                printf("Registered memory zone: %s (bytes: %llu).\n", zone->name, zone->capacity);
+                KYRA_PRINT_INFO("Registered memory zone: %s (bytes: %llu).", zone->name, zone->capacity);
             }
         }
     }
@@ -175,7 +176,10 @@ KYRA_ENGINE_API EngineResult engine_preconstruct(ConstStr config_filepath) {
     if (state) return ENGINE_PRECONSTRUCT_ERROR_STATE_ALREADY_INITIALISED;
     if (!config_filepath) return ENGINE_PRECONSTRUCT_ERROR_CONFIG_FILEPATH_NULL;
     
-    printf("Preconstructing engine...\n");
+    // Console startup
+    console_startup();
+
+    KYRA_PRINT_INFO("Preconstructing engine...");
     
     // Allocate and reset engine state
     state = malloc(sizeof(EngineState));
@@ -196,13 +200,13 @@ KYRA_ENGINE_API EngineResult engine_preconstruct(ConstStr config_filepath) {
     // Memory manager startup
     MemoryManagerResult memory_manager_result = memory_manager_startup(&state->memory_config);
     if (memory_manager_result != MEMORY_MANAGER_SUCCESS) {
-        printf("Error: Memory manager startup failed (Error: %s).\n", memory_manager_result_to_string(memory_manager_result));
+        KYRA_PRINT_ERROR("Memory manager startup failed (Error: %s).", memory_manager_result_to_string(memory_manager_result));
         
         // Call for engine destruction
         return engine_destruct();
     }
 
-    printf("Engine preconstructed.\n");
+    KYRA_PRINT_INFO("Engine preconstructed.");
 
     return ENGINE_SUCCESS;
 }
@@ -210,9 +214,9 @@ KYRA_ENGINE_API EngineResult engine_preconstruct(ConstStr config_filepath) {
 KYRA_ENGINE_API EngineResult engine_construct(void) {
     if (!state) return ENGINE_CONSTRUCT_ERROR_STATE_NOT_INITIALISED;
 
-    printf("Constructing engine...\n");
+    KYRA_PRINT_INFO("Constructing engine...");
     
-    printf("Engine constructed.\n");
+    KYRA_PRINT_INFO("Engine constructed.");
 
     return ENGINE_SUCCESS;
 }
@@ -220,10 +224,9 @@ KYRA_ENGINE_API EngineResult engine_construct(void) {
 KYRA_ENGINE_API EngineResult engine_update(Flt32 delta_time) {
     if (!state) return ENGINE_UPDATE_ERROR_STATE_NOT_INITIALISED;
     
-    printf("Updating engine...\n");
-        
-    memory_manager_report();
+    KYRA_PRINT_INFO("Updating engine...");
 
+    memory_manager_report();
 
     return ENGINE_SUCCESS;
 }
@@ -231,12 +234,12 @@ KYRA_ENGINE_API EngineResult engine_update(Flt32 delta_time) {
 KYRA_ENGINE_API EngineResult engine_destruct(void) {
     if (!state) return ENGINE_DESTRUCT_ERROR_STATE_NOT_INITIALISED;
 
-    printf("Destructing engine...\n");
+    KYRA_PRINT_INFO("Destructing engine...");
     
     // Memory manager shutdown
     MemoryManagerResult memory_manager_result = memory_manager_shutdown();
     if (memory_manager_result != MEMORY_MANAGER_SUCCESS)
-        printf("Error: Memory manager shutdown failed (Error: %s).\n", memory_manager_result_to_string(memory_manager_result));
+        KYRA_PRINT_ERROR("Memory manager shutdown failed (Error: %s).", memory_manager_result_to_string(memory_manager_result));
 
     // Deallocate memory configuration properties
     {
@@ -253,7 +256,10 @@ KYRA_ENGINE_API EngineResult engine_destruct(void) {
     free(state);
     state = NULL;
 
-    printf("Engine destructed.\n");
+    KYRA_PRINT_INFO("Engine destructed.");
+
+    // Console shutdown
+    console_shutdown();
 
     return ENGINE_SUCCESS;
 }

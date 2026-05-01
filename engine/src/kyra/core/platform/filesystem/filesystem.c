@@ -243,7 +243,7 @@ KYRA_ENGINE_API FilesystemResult platform_filesystem_write_line(File *file, Cons
     if (!line) return FILESYSTEM_ERROR_LINE_NULL;
 
     // Write line
-    if (fprintf(file->stream, "%s\n", line) < 0) return FILESYSTEM_ERROR_FAILED_TO_WRITE_LINE;
+    if (fprintf(file->stream, "%s", line) < 0) return FILESYSTEM_ERROR_FAILED_TO_WRITE_LINE;
 
     // Flush the file stream to ensure line is written to file
     if (fflush(file->stream) != 0) return FILESYSTEM_ERROR_FAILED_TO_FLUSH_FILE;

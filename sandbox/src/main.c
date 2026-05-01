@@ -6,15 +6,15 @@
 
 
 static void on_startup(Application *app) {
-    printf("Sandbox: Application startup completed.\n");
+    KYRA_PRINT_INFO("Sandbox: Application startup completed.");
 }
 
 static void on_update(Application *app, float delta_time) {
-    printf("Sandbox: Application updated.\n");
+    KYRA_PRINT_INFO("Sandbox: Application updated.");
 }
 
 static void on_shutdown(Application *app) {
-    printf("Sandbox: Application shutdown completed.\n");
+    KYRA_PRINT_INFO("Sandbox: Application shutdown completed.");
 }
 
 
