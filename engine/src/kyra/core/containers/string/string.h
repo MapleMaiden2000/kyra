@@ -1,0 +1,40 @@
+#pragma once
+
+#include "kyra/defines/shared.h"
+#include "kyra/defines/core/containers.h"
+
+
+// API functions ------------------------------------------------------- //
+
+KYRA_ENGINE_API ContainerResult     container_string_construct(ConstStr value, String *out_string);
+KYRA_ENGINE_API ContainerResult     container_string_construct_empty(String *out_string);
+KYRA_ENGINE_API ContainerResult     container_string_construct_reserved(const ByteSize capacity, String *out_string);
+KYRA_ENGINE_API ContainerResult     container_string_construct_from_chars(const Char c, const ByteSize count, String *out_string);
+KYRA_ENGINE_API ContainerResult     container_string_construct_formatted(String *out_string, ConstStr format, ...);
+
+KYRA_ENGINE_API ContainerResult     container_string_destruct(String *string);
+
+KYRA_ENGINE_API ContainerResult     container_string_clear(String *string);
+KYRA_ENGINE_API ContainerResult     container_string_set(String *string, ConstStr value);
+
+KYRA_ENGINE_API ContainerResult     container_string_append(String *string, ConstStr value);
+KYRA_ENGINE_API ContainerResult     container_string_append_chars(String *string, const Char c, const ByteSize count);
+KYRA_ENGINE_API ContainerResult     container_string_append_formatted(String *string, ConstStr format, ...);
+
+KYRA_ENGINE_API ContainerResult     container_string_detach(String *string);
+KYRA_ENGINE_API ContainerResult     container_string_detach_ranged(String *string, const ByteSize range);
+
+KYRA_ENGINE_API ContainerResult     container_string_insert(String *string, const ByteSize index, ConstStr substr);
+KYRA_ENGINE_API ContainerResult     container_string_insert_chars(String *string, const ByteSize index, const Char c, const ByteSize count);
+KYRA_ENGINE_API ContainerResult     container_string_insert_formatted(String *string, const ByteSize index, ConstStr format, ...);
+
+KYRA_ENGINE_API ContainerResult     container_string_remove_at(String *string, const ByteSize index, const ByteSize count);
+
+KYRA_ENGINE_API ContainerResult     container_string_to_cstr(const String string, ConstStr *out_cstr);
+KYRA_ENGINE_API ContainerResult     container_string_size(const String string, ByteSize *out_size);
+KYRA_ENGINE_API ContainerResult     container_string_capacity(const String string, ByteSize *out_capacity);
+KYRA_ENGINE_API ContainerResult     container_string_is_empty(const String string, Bool *out_result);
+
+KYRA_ENGINE_API ConstStr            container_string_result_to_string(const ContainerResult result);
+
+
