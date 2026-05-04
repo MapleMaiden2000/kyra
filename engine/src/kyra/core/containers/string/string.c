@@ -540,6 +540,30 @@ KYRA_ENGINE_API ContainerResult container_string_is_empty(const String string, B
     return CONTAINER_SUCCESS;
 }
 
+KYRA_ENGINE_API ConstStr container_string_get_cstr(const String string) {
+    if (!string) return NULL;
+    
+    return string->data;
+}
+
+KYRA_ENGINE_API ByteSize container_string_get_size(const String string) {
+    if (!string) return 0;
+    
+    return string->size;
+}
+
+KYRA_ENGINE_API ByteSize container_string_get_capacity(const String string) {
+    if (!string) return 0;
+    
+    return string->capacity;
+}
+
+KYRA_ENGINE_API Bool container_string_get_is_empty(const String string) {
+    if (!string) return true;
+
+    return (string->size == 0);
+}
+
 KYRA_ENGINE_API ConstStr container_string_result_to_string(const ContainerResult result) {
     switch (result) {
         case CONTAINER_SUCCESS:                                                             return "CONTAINER_SUCCESS";

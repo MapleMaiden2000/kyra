@@ -10,6 +10,7 @@
 #include "kyra/core/memory/manager/memory_manager.h"
 #include "kyra/core/memory/zone/memory_zone.h"
 #include "kyra/core/misc/console/console.h"
+#include "kyra/core/containers/string/string.h"
 
 
 // Engine state --------------------------------------------------------- //
@@ -227,6 +228,14 @@ KYRA_ENGINE_API EngineResult engine_update(Flt32 delta_time) {
     KYRA_PRINT_INFO("Updating engine...");
 
     memory_manager_report();
+
+    // Test suite for string
+    {
+        String str1;
+        container_string_construct("Hello world. This is a string constructed by Kyra Engine.", &str1);
+
+        printf("%s\n", container_string_get_cstr(str1));
+    }
 
     return ENGINE_SUCCESS;
 }

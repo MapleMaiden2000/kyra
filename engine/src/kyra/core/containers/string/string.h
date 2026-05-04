@@ -35,6 +35,11 @@ KYRA_ENGINE_API ContainerResult     container_string_size(const String string, B
 KYRA_ENGINE_API ContainerResult     container_string_capacity(const String string, ByteSize *out_capacity);
 KYRA_ENGINE_API ContainerResult     container_string_is_empty(const String string, Bool *out_result);
 
+KYRA_ENGINE_API ConstStr            container_string_get_cstr(const String string);
+KYRA_ENGINE_API ByteSize            container_string_get_size(const String string);
+KYRA_ENGINE_API ByteSize            container_string_get_capacity(const String string);
+KYRA_ENGINE_API Bool                container_string_get_is_empty(const String string);
+
 KYRA_ENGINE_API ConstStr            container_string_result_to_string(const ContainerResult result);
 
 
