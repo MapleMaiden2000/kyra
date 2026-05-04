@@ -20,12 +20,14 @@ typedef enum Container_Result {
     CONTAINER_STRING_ERROR_FORMAT_NULL                                          = 101,
     CONTAINER_STRING_ERROR_CAPACITY_ZERO                                        = 102,
     CONTAINER_STRING_ERROR_SUBSTRING_NULL                                       = 103,
-    CONTAINER_STRING_ERROR_INDEX_OUT_OF_BOUNDS                                  = 104,
-    CONTAINER_STRING_ERROR_REF_OUT_STRING_NULL                                  = 105,
-    CONTAINER_STRING_ERROR_REF_STRING_NULL                                      = 106,
-    CONTAINER_STRING_ERROR_REF_STRING_NOT_VALID                                 = 107,
-    CONTAINER_STRING_ERROR_FAILED_TO_ALLOCATE_MEMORY_FOR_STRING                 = 108,
-    CONTAINER_STRING_ERROR_FAILED_TO_DEALLOCATE_MEMORY_OF_STRING                = 109
+    CONTAINER_STRING_ERROR_SUBSTRING_LONGER_THAN_STRING                         = 104,
+    CONTAINER_STRING_ERROR_INDEX_OUT_OF_BOUNDS                                  = 105,
+    CONTAINER_STRING_ERROR_REF_OUT_STRING_NULL                                  = 106,
+    CONTAINER_STRING_ERROR_REF_STRING_NULL                                      = 107,
+    CONTAINER_STRING_ERROR_REF_STRING_NOT_VALID                                 = 108,
+    CONTAINER_STRING_ERROR_FAILED_TO_ALLOCATE_MEMORY_FOR_STRING                 = 109,
+    CONTAINER_STRING_ERROR_FAILED_TO_DEALLOCATE_MEMORY_OF_STRING                = 110,
+    CONTAINER_STRING_ERROR_FAILED_TO_FIND_ANY_MATCH                             = 111
     
 } ContainerResult;
 

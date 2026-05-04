@@ -234,7 +234,63 @@ KYRA_ENGINE_API EngineResult engine_update(Flt32 delta_time) {
         String str1;
         container_string_construct("Hello world. This is a string constructed by Kyra Engine.", &str1);
 
-        printf("%s\n", container_string_get_cstr(str1));
+        printf("Str1: %s\n", container_string_get_cstr(str1));
+        printf("Str1 size: %llu\n", container_string_get_size(str1));
+        
+        String str2;
+        container_string_construct_formatted(
+            &str2,
+            "Kyra Engine has %llu %s.", 
+            state->memory_config.zone_count, 
+            state->memory_config.zone_count == 1 ? "zone" : "zones"
+        );
+        printf("Str1 size: %llu\n", container_string_get_size(str2));
+        
+        printf("Str2: %s\n", container_string_get_cstr(str2));
+        
+        container_string_append_formatted(&str1, " %s", container_string_get_cstr(str2));
+        
+        printf("Str: %s\n", container_string_get_cstr(str1));
+        printf("Str size: %llu\n", container_string_get_size(str1));
+
+        container_string_destruct(&str2);
+
+        container_string_remove_at(&str1, 13, 17);
+        
+        printf("Str: %s\n", container_string_get_cstr(str1));
+        printf("Str size: %llu\n", container_string_get_size(str1));
+        
+        container_string_insert_chars(&str1, 12, '.', 2);
+        
+        printf("Str: %s\n", container_string_get_cstr(str1));
+        printf("Str size: %llu\n", container_string_get_size(str1));
+        
+        container_string_remove(&str1, " Engine", true);
+        
+        printf("Str: %s\n", container_string_get_cstr(str1));
+        printf("Str size: %llu\n", container_string_get_size(str1));
+        
+        container_string_remove_chars(&str1, 'l', true);
+        
+        printf("Str: %s\n", container_string_get_cstr(str1));
+        printf("Str size: %llu\n", container_string_get_size(str1));
+        
+        container_string_append(&str1, "The capitalised name is: KYRA ENGINE.");
+        
+        printf("Str: %s\n", container_string_get_cstr(str1));
+        printf("Str size: %llu\n", container_string_get_size(str1));
+        
+        container_string_replace_char(&str1, 'a', '*');
+        
+        printf("Str: %s\n", container_string_get_cstr(str1));
+        printf("Str size: %llu\n", container_string_get_size(str1));
+        
+        container_string_replace_substring(&str1, "Kyr*", "Kyra Engine");
+        
+        printf("Str: %s\n", container_string_get_cstr(str1));
+        printf("Str size: %llu\n", container_string_get_size(str1));
+
+        container_string_destruct(&str1);
     }
 
     return ENGINE_SUCCESS;

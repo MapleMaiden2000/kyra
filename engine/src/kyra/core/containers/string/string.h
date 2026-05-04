@@ -28,7 +28,12 @@ KYRA_ENGINE_API ContainerResult     container_string_insert(String *string, cons
 KYRA_ENGINE_API ContainerResult     container_string_insert_chars(String *string, const ByteSize index, const Char c, const ByteSize count);
 KYRA_ENGINE_API ContainerResult     container_string_insert_formatted(String *string, const ByteSize index, ConstStr format, ...);
 
+KYRA_ENGINE_API ContainerResult     container_string_remove(String *string, ConstStr substr, const Bool remove_all);
+KYRA_ENGINE_API ContainerResult     container_string_remove_chars(String *string, const Char c, const Bool remove_all);
 KYRA_ENGINE_API ContainerResult     container_string_remove_at(String *string, const ByteSize index, const ByteSize count);
+
+KYRA_ENGINE_API ContainerResult     container_string_replace_char(String *string, const Char old_char, const Char new_char);
+KYRA_ENGINE_API ContainerResult     container_string_replace_substring(String *string, ConstStr old_substr, ConstStr new_substr);
 
 KYRA_ENGINE_API ContainerResult     container_string_to_cstr(const String string, ConstStr *out_cstr);
 KYRA_ENGINE_API ContainerResult     container_string_size(const String string, ByteSize *out_size);
