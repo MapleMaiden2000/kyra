@@ -42,6 +42,8 @@ KYRA_ENGINE_API ContainerResult     container_string_trim_left(String *string);
 KYRA_ENGINE_API ContainerResult     container_string_trim_right(String *string);
 KYRA_ENGINE_API ContainerResult     container_string_trim(String *string);
 
+KYRA_ENGINE_API ContainerResult     container_string_filter_char(String *string, const Char c, const Bool keep);
+
 KYRA_ENGINE_API ContainerResult     container_string_equals(const String left, ConstStr right, Bool *out_result);
 KYRA_ENGINE_API ContainerResult     container_string_equals_string(const String left, const String right, Bool *out_result);
 

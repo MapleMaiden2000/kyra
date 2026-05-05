@@ -525,7 +525,7 @@ KYRA_ENGINE_API ContainerResult container_string_insert_formatted(String *string
     vsnprintf((*string)->data + index, formatted_size + 1, format, args);
     va_end(args);
     
-    // Null-terminate
+    // Null-terminate string
     (*string)->data[new_size] = '\0';
         
     // Update string size
@@ -550,7 +550,7 @@ KYRA_ENGINE_API ContainerResult container_string_remove(String *string, ConstStr
         // Update string size
         (*string)->size -= substring_size;
 
-        // Null-terminate
+        // Null-terminate string
         (*string)->data[(*string)->size] = '\0';
 
         if (!remove_all) {
@@ -579,7 +579,7 @@ KYRA_ENGINE_API ContainerResult container_string_remove_chars(String *string, co
         memmove((*string)->data + index, (*string)->data + index + 1, (*string)->size - index - 1);
 
         // Decrement string size
-        // Null-terminate
+        // Null-terminate string
         (*string)->data[--(*string)->size] = '\0';
 
         if (!remove_all) {
@@ -614,7 +614,7 @@ KYRA_ENGINE_API ContainerResult container_string_remove_at(String *string, const
     // Shift characters to the left to overwrite 'rmv_count' characters
     memmove((*string)->data + index, (*string)->data + index + rmv_count, string_size - index - rmv_count);
         
-    // Null-terminate
+    // Null-terminate string
     (*string)->data[new_size] = '\0';
         
     // Update string size
@@ -1185,7 +1185,7 @@ KYRA_ENGINE_API ContainerResult container_string_trim_left(String *string) {
     // Update string size
     (*string)->size = end - start;
 
-    // Null-terminate
+    // Null-terminate string
     (*string)->data[(*string)->size] = '\0';
 
     return CONTAINER_SUCCESS;
@@ -1323,6 +1323,194 @@ KYRA_ENGINE_API ContainerResult container_string_trim_right(String *string) {
 
 KYRA_ENGINE_API ContainerResult container_string_trim(String *string) {
     return container_string_trim_left(string) | container_string_trim_right(string);
+}
+
+KYRA_ENGINE_API ContainerResult container_string_filter_char(String *string, const Char c, const Bool keep) {
+    if (!string) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
+
+    // Return if requested to remove null-terminator character
+    if (c == '\0') return CONTAINER_SUCCESS;
+
+    ByteSize size = (*string)->size;
+    ByteSize read_index = 0;
+    ByteSize write_index = 0;
+
+    #if defined(__AVX2__)
+    {
+        // Load in character to compare with
+        __m256i vec_char = _mm256_set1_epi8(c);
+        
+        while (read_index + 32 <= size) {
+            // For current block of 32 characters...
+
+            // Load in 256 bits (32 characters) from current 'read_index' into memory
+            __m256i vec_str = _mm256_loadu_si256((__m256i *)((*string)->data + read_index));
+            
+            // Compare with character
+            __m256i mask_cmp = _mm256_cmpeq_epi8(vec_str, vec_char);
+            
+            Int32 matched_bits = _mm256_movemask_epi8(mask_cmp);
+            if (keep) {
+                // We are requested to keep matched characters and remove the rest...
+
+                if (matched_bits == 0) {
+                    // No matching bytes... 
+
+                    // Advance 'read_index' to next block (32 characters)
+                    read_index += 32;
+                    continue;
+                }
+                
+                while (matched_bits != 0) {
+                    Int32 matched_index = _container_string_ctz(matched_bits);
+                    
+                    // Write to string
+                    // Advance 'write_index' to next block (16 characters)
+                    (*string)->data[write_index++] = (*string)->data[read_index + matched_index];
+                    
+                    // Remove matched bit
+                    matched_bits &= ~(1 << matched_index);
+                }
+                
+            } else {
+                // Otherwise (remove matched characters and keep the rest)...
+
+                if (matched_bits == 0) {
+                    // In case of no matching characters, write all 32
+                    // Advance 'write_index' to next block (32 characters)
+                    memcpy((*string)->data + write_index, (*string)->data + read_index, 32);
+                    write_index += 32;
+                    
+                    // Advance 'read_index' to next block (32 characters)
+                    read_index += 32;
+                    continue;
+                }
+                
+                // If there are matching characters...
+                for (ByteSize i = 0; i < 32; ++i) {
+                    // For each character index inside block...
+
+                    // Skip if character matches
+                    if (matched_bits & (1 << i)) continue;
+                    
+                    // Write non-matching character to string
+                    // Advance 'write_index' to next character 
+                    (*string)->data[write_index++] = (*string)->data[read_index + i];
+                }
+            }
+            
+            // Advance 'read_index' to next block (32 characters)
+            read_index += 32;
+        }
+    }
+    #endif
+
+    #if defined(__SSE__)
+    {
+        // Load in character to compare with
+        __m128i vec_char = _mm_set1_epi8(c);
+        
+        while (read_index + 16 <= size) {
+            // For current block of 16 characters...
+
+            // Load in 128 bits (16 characters) from current 'read_index' into memory
+            __m128i vec_str = _mm_loadu_si128((__m128i *)((*string)->data + read_index));
+            
+            // Compare with character
+            __m128i mask_cmp = _mm_cmpeq_epi8(vec_str, vec_char);
+            
+            Int16 matched_bits = (Int16)_mm_movemask_epi8(mask_cmp);
+            if (keep) {
+                // We are requested to keep matched characters and remove the rest...
+
+                if (matched_bits == 0) {
+                    // No matching bytes... 
+
+                    // Advance 'read_index' to next block (16 characters)
+                    read_index += 16;
+                    continue;
+                }
+                
+                while (matched_bits != 0) {
+                    Int32 matched_index = _container_string_ctz(matched_bits);
+                    
+                    // Write to string
+                    // Advance 'write_index' to next block (16 characters)
+                    (*string)->data[write_index++] = (*string)->data[read_index + matched_index];
+                    
+                    // Remove matched bit
+                    matched_bits &= ~(1 << matched_index);
+                }
+                
+            } else {
+                // Otherwise (remove matched characters and keep the rest)...
+
+                if (matched_bits == 0) {
+                    // In case of no matching characters, write all 16
+                    // Advance 'write_index' to next block (16 characters)
+                    memcpy((*string)->data + write_index, (*string)->data + read_index, 16);
+                    write_index += 16;
+                    
+                    // Advance 'read_index' to next block (16 characters)
+                    read_index += 16;
+                    continue;
+                }
+                
+                // If there are matching characters...
+                for (ByteSize i = 0; i < 16; ++i) {
+                    // For each character index inside block...
+
+                    // Skip if character matches
+                    if (matched_bits & (1 << i)) continue;
+                    
+                    // Write non-matching character to string
+                    // Advance 'write_index' to next character 
+                    (*string)->data[write_index++] = (*string)->data[read_index + i];
+                }
+            }
+            
+            // Advance 'read_index' to next block (16 characters)
+            read_index += 16;
+        }
+    }
+    #endif
+
+    // Handle remaining bytes
+    // Also acts as fallback to scalar implementation, in case of no SIMD support
+    while (read_index < size) {
+        if (keep) {
+            // Keep matched characters and remove the rest...
+
+            if ((*string)->data[read_index] == c) { 
+                // Character matched...
+                
+                // Write matched character to string
+                // Advance 'write_index' to next character 
+                (*string)->data[write_index++] = (*string)->data[read_index];
+            }
+        } else {
+            // Remove matched characters and keep the rest...
+
+            if ((*string)->data[read_index] != c) { 
+                // Character not matched...
+
+                // Write non-matched character to string
+                // Advance 'write_index' to next character 
+                (*string)->data[write_index++] = (*string)->data[read_index];
+            }
+        }
+        
+        // Advance 'read_index' to next character 
+        ++read_index;
+    }
+
+    // Null-terminate string
+    (*string)->data[write_index] = '\0';
+
+    // Update string size
+    (*string)->size = write_index;
+
+    return CONTAINER_SUCCESS;
 }
 
 KYRA_ENGINE_API ContainerResult container_string_equals(const String left, ConstStr right, Bool *out_result) {
