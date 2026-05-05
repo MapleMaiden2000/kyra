@@ -289,6 +289,32 @@ KYRA_ENGINE_API EngineResult engine_update(Flt32 delta_time) {
         
         printf("Str: %s\n", container_string_get_cstr(str1));
         printf("Str size: %llu\n", container_string_get_size(str1));
+        
+        container_string_insert(&str1, 0, "     ");
+        container_string_insert(&str1, container_string_get_size(str1), "     ");
+        
+        printf("Str: %s\n", container_string_get_cstr(str1));
+        printf("Str size: %llu\n", container_string_get_size(str1));
+        
+        container_string_trim(&str1);
+        
+        printf("Str: %s\n", container_string_get_cstr(str1));
+        printf("Str size: %llu\n", container_string_get_size(str1));
+        
+        Bool contains = false;
+        Int32 at_index = -1;
+
+        container_string_contains(str1, "Kyra", &contains);
+        printf("str1 contains 'Kyra': %d\n", contains);
+        
+        container_string_contains(str1, "capitalised", &contains);
+        printf("str1 contains 'capitalised': %d\n", contains);
+        
+        container_string_contains(str1, "c*pit*lised", &contains);
+        printf("str1 contains 'c*pit*lised': %d\n", contains);
+        
+        container_string_search(str1, "c*pit*lised", &at_index);
+        printf("str1 found 'c*pit*lised' at index: %d\n", at_index);
 
         container_string_destruct(&str1);
     }

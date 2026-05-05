@@ -94,6 +94,33 @@ KYRA_INLINE Int32 _container_string_ctz(UInt32 mask) {
     #endif
 }
 
+// Count leading zeroes for SIMD optimisations
+KYRA_INLINE Int32 _container_string_clz(UInt32 mask) {
+    #if defined (__GNUC__) || defined (__clang__)
+        // Use GCC and Clang built-in function
+        return __builtin_clz(mask);
+    
+    #elif defined (_MSC_VER)
+        // Use MSVC built-in function
+        UInt32 index;
+        _BitScanReverse(&index, mask);
+        
+        return (Int32)index;
+    
+    #else
+        // Fallback for other compilers
+        if (mask == 0) return 32;
+    
+        Int32 index = 0;
+        while ((mask & 0x80000000) == 0) {
+            mask <<= 1;
+            ++index;
+        }
+    
+        return index;
+    #endif
+}
+
 
 // API functions ---------------------------------------------------------- //
 
@@ -611,7 +638,7 @@ KYRA_ENGINE_API ContainerResult container_string_replace_char(String *string, co
         __m256i vec_new = _mm256_set1_epi8(new_char);
 
         while (index + 32 <= string_size) {
-            // For the current block of 32 characters...
+            // For current block of 32 characters...
             
             // Load in 256 bits (32 characters) from current index into memory
             __m256i vec_str = _mm256_loadu_si256((__m256i *)((*string)->data + index));
@@ -626,7 +653,7 @@ KYRA_ENGINE_API ContainerResult container_string_replace_char(String *string, co
             // Save to string data
             _mm256_storeu_si256((__m256i *)((*string)->data + index), result);
 
-            // Move to next block (32 characters)
+            // Advance to next block (32 characters)
             index += 32;
         }
     }
@@ -638,7 +665,7 @@ KYRA_ENGINE_API ContainerResult container_string_replace_char(String *string, co
         __m128i vec_new = _mm_set1_epi8(new_char);
 
         while (index + 16 <= string_size) {
-            // For the current block of 16 characters...
+            // For current block of 16 characters...
             
             // Load in 128 bits (16 characters) from current index into memory
             __m128i vec_str = _mm_loadu_si128((__m128i*)((*string)->data + index));
@@ -655,7 +682,7 @@ KYRA_ENGINE_API ContainerResult container_string_replace_char(String *string, co
             // Save to string data
             _mm_storeu_si128((__m128i*)((*string)->data + index), result);
 
-            // Move to next block (16 characters)
+            // Advance to next block (16 characters)
             index += 16;
         }
     }
@@ -668,7 +695,7 @@ KYRA_ENGINE_API ContainerResult container_string_replace_char(String *string, co
             // Replace old character with new character if matched
             if ((*string)->data[index] == old_char) (*string)->data[index] = new_char;
 
-            // Move to next character
+            // Advance to next character
             ++index;
         }
     }
@@ -700,7 +727,7 @@ KYRA_ENGINE_API ContainerResult container_string_replace_substring(String *strin
         __m256i vec_old_first = _mm256_set1_epi8(old_substr[0]);
 
         while (index + 32 <= string_size) {
-            // For the current block of 32 characters...
+            // For current block of 32 characters...
             
             // Load in 256 bits (32 characters) from current index into memory
             __m256i vec_str = _mm256_loadu_si256((__m256i *)((*string)->data + index));
@@ -712,7 +739,7 @@ KYRA_ENGINE_API ContainerResult container_string_replace_substring(String *strin
             if (!matched_bits) { 
                 // No matches in this block...
                 
-                // Move to next block (32 characters)
+                // Advance to next block (32 characters)
                 index += 32; 
                 continue; 
             }
@@ -757,7 +784,7 @@ KYRA_ENGINE_API ContainerResult container_string_replace_substring(String *strin
         __m128i vec_old_first = _mm_set1_epi8(old_substr[0]);
 
         while (index + 16 <= string_size) {
-            // For the current block of 16 characters...
+            // For current block of 16 characters...
             
             // Load in 128 bits (16 characters) from current index into memory
             __m128i vec_str = _mm_loadu_si128((__m128i*)((*string)->data + index));
@@ -769,7 +796,7 @@ KYRA_ENGINE_API ContainerResult container_string_replace_substring(String *strin
             if (!matched_bits) { 
                 // No matches in this block...
                 
-                // Move to next block (16 characters)
+                // Advance to next block (16 characters)
                 index += 16; 
                 continue; 
             }
@@ -790,7 +817,7 @@ KYRA_ENGINE_API ContainerResult container_string_replace_substring(String *strin
                     // Jump past matched substring to avoid overlapping matches
                     index = actual_index + old_substring_size;
 
-                    // Clear bits to load the next block (32 characters)
+                    // Clear bits to load the next block (16 characters)
                     matched_bits = 0;
 
                     found = true;
@@ -804,12 +831,12 @@ KYRA_ENGINE_API ContainerResult container_string_replace_substring(String *strin
             }
 
             // Advance if no matches were found
-            if (!found) index += 32;
+            if (!found) index += 16;
         }
     }
     #endif
 
-    // Handle the remaining bytes
+    // Handle remaining bytes
     // Also acts as fallback implementation, in case of no SIMD support
     while (index <= string_size - old_substring_size) {
         if (!strncmp((*string)->data + index, old_substr, old_substring_size)) {
@@ -823,7 +850,7 @@ KYRA_ENGINE_API ContainerResult container_string_replace_substring(String *strin
         } else {
             // Otherwise...
 
-            // Move to next index and check
+            // Advance to next index and check
             ++index;
         }
     }
@@ -866,7 +893,7 @@ KYRA_ENGINE_API ContainerResult container_string_replace_substring(String *strin
             // Otherwise...
 
             // Copy character from old to new string
-            // Move to next respective index
+            // Advance to next respective index
             new_str->data[addr_dst++] = (*string)->data[addr_src++];
         }
     }
@@ -885,8 +912,652 @@ KYRA_ENGINE_API ContainerResult container_string_replace_substring(String *strin
     return CONTAINER_SUCCESS;
 }
 
-KYRA_ENGINE_API ContainerResult container_string_to_cstr(const String string, ConstStr *out_cstr) {
+KYRA_ENGINE_API ContainerResult container_string_to_lower(String *string) {
     if (!string) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
+
+    ByteSize string_size = (*string)->size;
+    ByteSize index = 0;
+
+    #if defined(__AVX2__)
+    {
+        __m256i a_minus_one = _mm256_set1_epi8('A' - 1);
+        __m256i z_plus_one = _mm256_set1_epi8('Z' + 1);
+        __m256i mask_lower  = _mm256_set1_epi8(0x20);
+
+        while (index + 32 <= string_size) {
+            // For current block of 32 characters...
+
+            // Load in 256 bits (32 characters) from current index into memory
+            __m256i vec_str = _mm256_loadu_si256((__m256i *)((*string)->data + index));
+
+            // Create mask for characters whichever being uppercase
+            __m256i mask_upper = _mm256_and_si256(_mm256_cmpgt_epi8(vec_str, a_minus_one), _mm256_cmpgt_epi8(z_plus_one, vec_str));
+
+            // Convert to lowercase
+            vec_str = _mm256_or_si256(vec_str, _mm256_and_si256(mask_upper, mask_lower));
+
+            // Save to string
+            _mm256_storeu_si256((__m256i*)((*string)->data + index), vec_str);
+
+            // Advance to next block (32 characters)
+            index += 32;
+        }
+    }
+    #endif
+
+    #if defined(__SSE__)
+    {
+        __m128i a_minus_one = _mm_set1_epi8('A' - 1);
+        __m128i z_plus_one = _mm_set1_epi8('Z' + 1);
+        __m128i mask_lower = _mm_set1_epi8(0x20);
+
+        while (index + 16 <= string_size) {
+            // For current block of 16 characters...
+
+            // Load in 128 bits (16 characters) from current index into memory
+            __m128i vec_str = _mm_loadu_si128((__m128i *)((*string)->data + index));
+
+            // Create mask for characters whichever being uppercase
+            __m128i mask_upper = _mm_and_si128(_mm_cmpgt_epi8(vec_str, a_minus_one), _mm_cmpgt_epi8(z_plus_one, vec_str));
+
+            // Convert to lowercase
+            vec_str = _mm_or_si128(vec_str, _mm_and_si128(mask_upper, mask_lower));
+
+            // Save to string
+            _mm_storeu_si128((__m128i*)((*string)->data + index), vec_str);
+
+            // Advance to next block (16 characters)
+            index += 16;
+        }
+    }
+    #endif
+
+    // Handle remaining bytes
+    // Also acts as fallback implementation, in case of no SIMD support
+    while (index < string_size) {
+        // Convert to lower if character is of uppercase
+        if ((*string)->data[index] >= 'A' && (*string)->data[index] <= 'Z') (*string)->data[index] |= 0x20;
+        
+        // Advance to next character
+        ++index;
+    }
+
+    return CONTAINER_SUCCESS;
+}
+
+KYRA_ENGINE_API ContainerResult container_string_to_upper(String *string) {
+    if (!string) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
+
+    ByteSize string_size = (*string)->size;
+    ByteSize index = 0;
+
+    #if defined(__AVX2__)
+    {
+        __m256i a_minus_one = _mm256_set1_epi8('A' - 1);
+        __m256i z_plus_one = _mm256_set1_epi8('Z' + 1);
+        __m256i mask_upper = _mm256_set1_epi8(~0x20);
+
+        while (index + 32 <= string_size) {
+            // For current block of 32 characters...
+
+            // Load in 256 bits (32 characters) from current index into memory
+            __m256i vec_str = _mm256_loadu_si256((__m256i *)((*string)->data + index));
+
+            // Create mask for characters whichever being lowercase
+            __m256i mask_lower = _mm256_and_si256(_mm256_cmpgt_epi8(vec_str, a_minus_one), _mm256_cmpgt_epi8(z_plus_one, vec_str));
+
+            // Convert to uppercase
+            vec_str = _mm256_and_si256(vec_str, _mm256_or_si256(mask_lower, mask_upper));
+
+            // Store to string
+            _mm256_storeu_si256((__m256i*)((*string)->data + index), vec_str);
+
+            // Advance to next block (32 characters)
+            index += 32;
+        }
+    }
+    #endif
+
+    #if defined(__SSE__)
+    {   
+        __m128i a_minus_one = _mm_set1_epi8('a' - 1);
+        __m128i z_plus_one = _mm_set1_epi8('z' + 1);
+        __m128i mask_upper = _mm_set1_epi8(~0x20);
+
+        while (index + 16 <= string_size) {
+            // For current block of 16 characters...
+
+            // Load in 128 bits (16 characters) from current index into memory
+            __m128i vec_str = _mm_loadu_si128((__m128i *)((*string)->data + index));
+
+            // Create mask for characters whichever being lowercase
+            __m128i mask_lower = _mm_and_si128(_mm_cmpgt_epi8(vec_str, a_minus_one), _mm_cmpgt_epi8(z_plus_one, vec_str));
+
+            // Convert to uppercase
+            vec_str = _mm_and_si128(vec_str, _mm_or_si128(mask_lower, mask_upper));
+
+            // Store to string
+            _mm_storeu_si128((__m128i*)((*string)->data + index), vec_str);
+
+            // Advance to next block (16 characters)
+            index += 16;
+        }
+    }
+    #endif
+
+    // Handle the remaining bytes
+    // Also acts as fallback implementation, in case of no SIMD support
+    while (index < (*string)->size) {
+        // Convert to uppercase if character is of lowercase
+        if ((*string)->data[index] >= 'a' && (*string)->data[index] <= 'z') (*string)->data[index] &= ~0x20;
+        
+        // Advance to next character
+        ++index;
+    }
+        
+    return CONTAINER_SUCCESS;
+}
+
+KYRA_ENGINE_API ContainerResult container_string_trim_left(String *string) {
+    if (!string) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
+
+    ByteSize start = 0, end = (*string)->size;
+
+    #if defined(__AVX2__)
+    {
+        __m256i mask_space = _mm256_set1_epi8(' ');
+        __m256i mask_tab = _mm256_set1_epi8('\t');
+        __m256i mask_newln = _mm256_set1_epi8('\n');
+        __m256i mask_return = _mm256_set1_epi8('\r');
+
+        while (start + 32 <= end) {
+            // For current block of 32 characters...
+
+            // Load in 256 bits (32 characters) from current 'start' index into memory
+            __m256i vec_str = _mm256_loadu_si256((__m256i *)((*string)->data + start));
+
+            // Create masks for each whitespace character
+            __m256i mask_is_space = _mm256_cmpeq_epi8(vec_str, mask_space);
+            __m256i mask_is_tab = _mm256_cmpeq_epi8(vec_str, mask_tab);
+            __m256i mask_is_newln = _mm256_cmpeq_epi8(vec_str, mask_newln);
+            __m256i mask_is_return = _mm256_cmpeq_epi8(vec_str, mask_return);
+
+            // Combine masks to find all whitespace
+            __m256i mask_all_whitespace = _mm256_or_si256(
+                _mm256_or_si256(mask_is_space, mask_is_tab), _mm256_or_si256(mask_is_newln, mask_is_return)
+            );
+
+            Int32 matched_bits = _mm256_movemask_epi8(mask_all_whitespace);
+            if (matched_bits == (Int32)0xffffffff) {
+                // All characters are whitespace...
+
+                // Advance to next block (32 characters)
+                start += 32;
+            }
+            else {
+                // Otherwise...
+
+                // Locate the first non-whitespace character
+                Int32 non_match_index = _container_string_ctz(~matched_bits);
+                Int32 actual_index = start + non_match_index;
+
+                // Trim to that character
+                start = actual_index;
+
+                // Exit the loop
+                break;
+            }
+        }
+    }
+    #endif
+
+    #if defined(__SSE__)
+    {
+        __m128i mask_space = _mm_set1_epi8(' ');
+        __m128i mask_tab = _mm_set1_epi8('\t');
+        __m128i mask_newln = _mm_set1_epi8('\n');
+        __m128i mask_return = _mm_set1_epi8('\r');
+        
+        while (start + 16 <= end) {
+            // For current block of 16 characters...
+
+            // Load in 128 bits (16 characters) from current 'start' index into memory
+            __m128i vec_str = _mm_loadu_si128((__m128i *)((*string)->data + start));
+            
+            // Create masks for each whitespace character
+            __m128i mask_is_space = _mm_cmpeq_epi8(vec_str, mask_space);
+            __m128i mask_is_tab = _mm_cmpeq_epi8(vec_str, mask_tab);
+            __m128i mask_is_newln = _mm_cmpeq_epi8(vec_str, mask_newln);
+            __m128i mask_is_return = _mm_cmpeq_epi8(vec_str, mask_return);
+            
+            // Combine masks to find all whitespace
+            __m128i mask_all_whitespace = _mm_or_si128(
+                _mm_or_si128(mask_is_space, mask_is_tab), _mm_or_si128(mask_is_newln, mask_is_return)
+            );
+            
+            Int16 matched_bits = (Int16)_mm_movemask_epi8(mask_all_whitespace);
+            if (matched_bits == (Int16)0xffff) {
+                // All characters are whitespace...
+
+                // Advance to next block (16 characters)
+                start += 16;
+            }
+            else {
+                // Otherwise...
+
+                // Locate the first non-whitespace character
+                Int32 non_match_index = _container_string_ctz(~matched_bits);
+                Int32 actual_index = start + non_match_index;
+
+                // Trim to that character
+                start = actual_index;
+
+                // Exit the loop
+                break;
+            }
+        }
+    }
+    #endif
+
+    // Handle the remaining bytes
+    // Also acts as fallback implementation, in case of no SIMD support
+    while (start < end) {
+        if (
+            (*string)->data[start] != ' ' &&
+            (*string)->data[start] != '\t' && 
+            (*string)->data[start] != '\n' && 
+            (*string)->data[start] != '\r'
+        ) {
+            // Found non-whitespace character...
+
+            // Done...
+            // Exit the loop
+            break;
+        }
+        
+        // Advance to next character
+        ++start;
+    }
+
+    // Shift characters to the left to overwrite leading whitespace characters
+    if (start > 0) memmove((*string)->data, (*string)->data + start, end - start);
+
+    // Update string size
+    (*string)->size = end - start;
+
+    // Null-terminate
+    (*string)->data[(*string)->size] = '\0';
+
+    return CONTAINER_SUCCESS;
+}
+
+KYRA_ENGINE_API ContainerResult container_string_trim_right(String *string) {
+    if (!string) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
+
+    ByteSize start = 0, end = (*string)->size;
+
+    #if defined(__AVX2__)
+    {
+        __m256i mask_space = _mm256_set1_epi8(' ');
+        __m256i mask_tab = _mm256_set1_epi8('\t');
+        __m256i mask_newln = _mm256_set1_epi8('\n');
+        __m256i mask_return = _mm256_set1_epi8('\r');
+
+        while (end - 32 >= start) {
+            // For current block of 32 characters...
+
+            // Load in 256 bits (32 characters) from current 'end' index into memory
+            __m256i vec_str = _mm256_loadu_si256((__m256i *)((*string)->data + (end - 32)));
+            
+            // Create masks for each whitespace character
+            __m256i mask_is_space = _mm256_cmpeq_epi8(vec_str, mask_space);
+            __m256i mask_is_tab = _mm256_cmpeq_epi8(vec_str, mask_tab);
+            __m256i mask_is_newln = _mm256_cmpeq_epi8(vec_str, mask_newln);
+            __m256i mask_is_return = _mm256_cmpeq_epi8(vec_str, mask_return);
+
+            // Combine masks to find all whitespace
+            __m256i mask_all_whitespace = _mm256_or_si256(
+                _mm256_or_si256(mask_is_space, mask_is_tab), _mm256_or_si256(mask_is_newln, mask_is_return)
+            );
+
+            Int32 matched_bits = _mm256_movemask_epi8(mask_all_whitespace);
+            if (matched_bits == (Int32)0xffffffff) {
+                // All characters are whitespace...
+
+                // Roll back to previous block (32 characters)
+                end -= 32;
+            }
+            else {
+                // Otherwise...
+
+                // Locate the first non-whitespace character
+                Int32 non_match_index = _container_string_clz(~matched_bits);
+                Int32 actual_index = end - non_match_index;
+
+                // Trim to that character
+                end = actual_index;
+
+                // Exit the loop
+                break;
+            }
+        }
+    }
+    #endif
+
+    #if defined(__SSE__)
+    {
+        __m128i mask_space = _mm_set1_epi8(' ');
+        __m128i mask_tab = _mm_set1_epi8('\t');
+        __m128i mask_newln = _mm_set1_epi8('\n');
+        __m128i mask_return = _mm_set1_epi8('\r');
+        
+        while (end - 16 >= start) {
+            // For current block of 16 characters...
+
+            // Load in 128 bits (16 characters) from current 'end' index into memory
+            __m128i vec_str = _mm_loadu_si128((__m128i *)((*string)->data + (end - 16)));
+            
+            // Create masks for each whitespace character
+            __m128i mask_is_space = _mm_cmpeq_epi8(vec_str, mask_space);
+            __m128i mask_is_tab = _mm_cmpeq_epi8(vec_str, mask_tab);
+            __m128i mask_is_newln = _mm_cmpeq_epi8(vec_str, mask_newln);
+            __m128i mask_is_return = _mm_cmpeq_epi8(vec_str, mask_return);
+            
+            // Combine masks to find all whitespace
+            __m128i mask_all_whitespace = _mm_or_si128(
+                _mm_or_si128(mask_is_space, mask_is_tab), _mm_or_si128(mask_is_newln, mask_is_return)
+            );
+            
+            Int16 matched_bits = (Int16)_mm_movemask_epi8(mask_all_whitespace);
+            if (matched_bits == (Int16)0xffff) {
+                // All characters are whitespace...
+
+                // Roll back to previous block (16 characters)
+                end -= 16;
+            }
+            else {
+                // Otherwise...
+
+                // Locate the first non-whitespace character
+                Int32 non_match_index = _container_string_ctz(~matched_bits);
+                Int32 actual_index = end - non_match_index;
+
+                // Trim to that character
+                end = actual_index;
+
+                // Exit the loop
+                break;
+            }
+        }
+    }
+    #endif
+
+    // Handle remaining bytes
+    // Also acts as fallback implementation, in case of no SIMD support
+    while (end > start) {
+        if (
+            (*string)->data[end - 1] != ' ' && 
+            (*string)->data[end - 1] != '\t' && 
+            (*string)->data[end - 1] != '\n' && 
+            (*string)->data[end - 1] != '\r'
+        ) {
+            // Found non-whitespace character...
+
+            // Done...
+            // Exit the loop
+            break;
+        }
+
+        // Roll back to previous character
+        --end;
+    }
+
+    // Update string size
+    (*string)->size = end - start;
+
+    // Null-terminate string
+    (*string)->data[(*string)->size] = '\0';
+
+    return CONTAINER_SUCCESS;
+}
+
+KYRA_ENGINE_API ContainerResult container_string_trim(String *string) {
+    return container_string_trim_left(string) | container_string_trim_right(string);
+}
+
+KYRA_ENGINE_API ContainerResult container_string_equals(const String left, ConstStr right, Bool *out_result) {
+    if (!left || !right) return CONTAINER_STRING_ERROR_STRING_NULL;
+
+    ByteSize left_size = left->size;
+    ByteSize right_size = strlen(right);
+
+    // Return if comparing strings do not even have same size 
+    if (left_size != right_size) {
+        // Save to ref
+        if (out_result) *out_result = false;
+        
+        return CONTAINER_STRING_ERROR_LEFT_AND_RIGHT_SIZES_MISMATCHED;
+    }
+
+    ByteSize index = 0;
+    Bool matched = true;
+
+    #if defined(__AVX2__)
+    {
+        __m256i vec_left, vec_right;
+        __m256i mask_lower = _mm256_set1_epi8(0x20);
+        
+        while ((index + 32 <= left_size) && (index + 32 <= right_size)) {
+            // For current block of 32 characters...
+
+            // Load in 256 bits (32 characters) from current index into memory
+            vec_left = _mm256_loadu_si256((__m256i *)(left->data + index));
+            vec_right = _mm256_loadu_si256((__m256i *)(right + index));
+            
+            if (_mm256_testz_si256(vec_left, vec_right)) {
+                // 'testz' returns 1...
+                // It means the vectors are not equal
+                
+                // Set 'matched' false and exit 
+                matched = false;
+                break;
+            }
+            
+            // Advance to next block (32 characters)
+            index += 32;
+        }
+    }
+    #endif 
+
+    #if defined(__SSE__)
+    {
+        __m128i vec_left, vec_right;
+        __m128i mask_lower = _mm_set1_epi8(0x20);
+        
+        while ((index + 16 <= left_size) && (index + 16 <= right_size)) {
+            // For current block of 16 characters...
+
+            // Load in 128 bits (16 characters) from current index into memory
+            vec_left = _mm_loadu_si128((__m128i *)(left->data + index));
+            vec_right = _mm_loadu_si128((__m128i *)(right + index));
+            
+            if (_mm_movemask_epi8(_mm_cmpeq_epi8(vec_left, vec_right)) == 0xffff) {
+                // Vectors are not equal...
+
+                // Set 'matched' false and exit
+                matched = false;
+                break;
+            }
+            
+            // Advance to next block (16 characters)
+            index += 16;
+        }
+    }
+    #endif 
+
+    // Handle remaining bytes
+    // Also acts as fallback to scalar implementation, in case of no SIMD support
+    while ((index < left->size) && (index < right_size)) {
+        if (left->data[index] != right[index]) {
+            // Characters are not equal...
+
+            // Set 'matched' false and exit
+            matched = false;
+            break;
+        }
+        
+        // Advance to next character
+        ++index;
+    }
+    
+    // Save to ref
+    if (out_result) *out_result = matched;
+
+    return CONTAINER_SUCCESS;
+}
+
+KYRA_ENGINE_API ContainerResult container_string_equals_string(const String left, const String right, Bool *out_result) {
+    return container_string_equals(left, right->data, out_result);
+}
+
+KYRA_ENGINE_API ContainerResult container_string_search(const String string, ConstStr substr, Int32 *out_index) {
+    if (!string) return CONTAINER_STRING_ERROR_STRING_NULL;
+    if (!substr) return CONTAINER_STRING_ERROR_SUBSTRING_NULL;
+
+    ByteSize index = 0;
+    ByteSize string_size = string->size;
+    ByteSize substring_size = strlen(substr);
+    
+    if (substring_size > string_size) {
+        // Substring is longer than string...
+
+        // Save to ref
+        if (out_index) *out_index = -1;
+        
+        return CONTAINER_STRING_ERROR_SUBSTRING_LONGER_THAN_STRING;
+    }
+
+    #if defined(__AVX2__)
+    {
+        while (index + 32 <= string_size) {
+            // For current block of 32 characters...
+
+            // Load in 256 bits (32 characters) from current index into memory
+            __m256i vec_str = _mm256_loadu_si256((__m256i *)(string->data + index));
+            
+            // Check if the first character of the substring matches
+            __m256i substr_first = _mm256_set1_epi8(substr[0]);
+            __m256i mask_cmp = _mm256_cmpeq_epi8(vec_str, substr_first);
+            
+            Int32 match_bits = _mm256_movemask_epi8(mask_cmp);
+            while (match_bits) {
+                // Get index of least significant bit to find the first occurrence of substring
+                Int32 matched_index = _container_string_ctz(match_bits);
+                
+                ByteSize start = index + matched_index;
+                if (start + substring_size <= string_size) {
+                    if (!strncmp(string->data + start, substr, substring_size)) {
+                        // Substrings matched...
+
+                        // Save to ref
+                        if (out_index) *out_index = start;
+
+                        return CONTAINER_SUCCESS;
+                    }
+                }
+                
+                // Remove the least significant bit
+                match_bits &= (match_bits - 1);
+            }
+            
+            // Advance to next block (32 characters)
+            index += 32;
+        }
+    }
+    #endif
+
+    #if defined(__SSE__)
+    {
+        while (index + 16 <= string_size) {
+            __m128i vec_str = _mm_loadu_si128((__m128i *)(string->data + index));
+            
+            // Check if the first character of the substring matches
+            __m128i substr_first = _mm_set1_epi8(substr[0]);
+            __m128i mask_cmp = _mm_cmpeq_epi8(vec_str, substr_first);
+            
+            Int32 match_bits = _mm_movemask_epi8(mask_cmp);
+            while (match_bits) {
+                // Get index of least significant bit to find the first occurrence of substring
+                Int32 matched_index = _container_string_ctz(match_bits);
+                
+                ByteSize start = index + matched_index;
+                if (start + substring_size <= string_size) {
+                    if (!strncmp(string->data + start, substr, substring_size)) {
+                        // Substring matched...
+
+                        // Save to ref
+                        if (out_index) *out_index = start;
+                        
+                        return CONTAINER_SUCCESS;
+                    }
+                }
+                
+                // Remove the least significant bit
+                match_bits &= (match_bits - 1);
+            }
+            
+            // Advance to next block (16 characters)
+            index += 16;
+        }
+    }
+    #endif
+
+    // Handle remaining bytes
+    // Also acts as fallback to scalar implementation, in case of no SIMD support
+    while (index < string_size) {
+        if (string->data[index] == substr[0]) {
+            if (!strncmp(string->data + index, substr, substring_size)) {
+                *out_index = index;
+                return CONTAINER_SUCCESS;
+            }
+        }
+
+        // Advance to next character
+        ++index;
+    }
+
+    // Save to ref
+    if (out_index) *out_index = -1;
+
+    return CONTAINER_STRING_ERROR_FAILED_TO_FIND_ANY_MATCH;
+}
+
+KYRA_ENGINE_API ContainerResult container_string_search_string(const String string, const String substr, Int32 *out_index) {
+    return container_string_search(string, substr->data, out_index);
+}
+
+KYRA_ENGINE_API ContainerResult container_string_contains(const String string, ConstStr substr, Bool *out_result) {
+    if (!string) return CONTAINER_STRING_ERROR_STRING_NULL;
+    if (!substr) return CONTAINER_STRING_ERROR_SUBSTRING_NULL;
+
+    // Search for the substring
+    Int32 search_index = 0;
+    ContainerResult search_result = container_string_search(string, substr, &search_index);
+
+    // Save to ref
+    if (out_result) *out_result = (search_index != -1);
+
+    return CONTAINER_SUCCESS;
+}
+
+
+KYRA_ENGINE_API ContainerResult container_string_contains_string(const String string, const String substr, Bool *out_result) {
+    return container_string_contains(string, substr->data, out_result);
+}
+
+
+KYRA_ENGINE_API ContainerResult container_string_to_cstr(const String string, ConstStr *out_cstr) {
+    if (!string) return CONTAINER_STRING_ERROR_STRING_NULL;
 
     // Save to ref
     if (out_cstr) *out_cstr = string->data;
@@ -895,7 +1566,7 @@ KYRA_ENGINE_API ContainerResult container_string_to_cstr(const String string, Co
 }
 
 KYRA_ENGINE_API ContainerResult container_string_size(const String string, ByteSize *out_size) {
-    if (!string) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
+    if (!string) return CONTAINER_STRING_ERROR_STRING_NULL;
 
     // Save to ref
     if (out_size) *out_size = string->size;
@@ -904,7 +1575,7 @@ KYRA_ENGINE_API ContainerResult container_string_size(const String string, ByteS
 }
 
 KYRA_ENGINE_API ContainerResult container_string_capacity(const String string, ByteSize *out_capacity) {
-    if (!string) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
+    if (!string) return CONTAINER_STRING_ERROR_STRING_NULL;
 
     // Save to ref
     if (out_capacity) *out_capacity = string->capacity;
@@ -913,7 +1584,7 @@ KYRA_ENGINE_API ContainerResult container_string_capacity(const String string, B
 }
 
 KYRA_ENGINE_API ContainerResult container_string_is_empty(const String string, Bool *out_result) {
-    if (!string) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
+    if (!string) return CONTAINER_STRING_ERROR_STRING_NULL;
 
     // Save to ref
     if (out_result) *out_result = (string->size == 0);
@@ -960,6 +1631,7 @@ KYRA_ENGINE_API ConstStr container_string_result_to_string(const ContainerResult
         case CONTAINER_STRING_ERROR_SUBSTRING_NULL:                                         return "CONTAINER_STRING_ERROR_SUBSTRING_NULL";
         case CONTAINER_STRING_ERROR_SUBSTRING_LONGER_THAN_STRING:                           return "CONTAINER_STRING_ERROR_SUBSTRING_LONGER_THAN_STRING";
         case CONTAINER_STRING_ERROR_INDEX_OUT_OF_BOUNDS:                                    return "CONTAINER_STRING_ERROR_INDEX_OUT_OF_BOUNDS";
+        case CONTAINER_STRING_ERROR_LEFT_AND_RIGHT_SIZES_MISMATCHED:                        return "CONTAINER_STRING_ERROR_LEFT_AND_RIGHT_SIZES_MISMATCHED";
         case CONTAINER_STRING_ERROR_REF_OUT_STRING_NULL:                                    return "CONTAINER_STRING_ERROR_REF_OUT_STRING_NULL";
         case CONTAINER_STRING_ERROR_REF_STRING_NULL:                                        return "CONTAINER_STRING_ERROR_REF_STRING_NULL";
         case CONTAINER_STRING_ERROR_REF_STRING_NOT_VALID:                                   return "CONTAINER_STRING_ERROR_REF_STRING_NOT_VALID";
