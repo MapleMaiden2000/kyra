@@ -41,6 +41,73 @@ static MemoryManagerResult _memory_manager_compute_size_classes(const ByteSize c
     return MEMORY_MANAGER_SUCCESS;
 }
 
+static void _memory_manager_format_bytes(const ByteSize size, Str out_buffer, const ByteSize buffer_size) {
+    ConstStr suffixes[] = { "B", "KB", "MB", "GB" };
+    ByteSize suffix_index = 0;
+    Flt32 count = (Flt32)size;  // To be used if >= 1024 bytes (1 KB)
+
+    // 'suffix_index' clamp is there to ensure it does not go out of bound
+    while (count >= 1024.f && suffix_index < 3) {
+        // Divide by 1024 until it cannot anymore
+        count /= 1024.f;
+        
+        // Advance to next index for every division
+        ++suffix_index;
+    }
+
+    if (suffix_index == 0) {
+        // If < 1024 bytes (1 KB)...
+
+        // Save to ref 
+        snprintf(out_buffer, buffer_size, "%llu %s", size, suffixes[suffix_index]);
+    }
+    else {
+        // Otherwise, if >= 1024 bytes (1 KB)...
+        
+        // Save to ref
+        snprintf(out_buffer, buffer_size, "%.2f %s", count, suffixes[suffix_index]);
+    }
+}
+
+static void _memory_manager_draw_progress_bar(const ByteSize used_memory, const ByteSize capacity, const ByteSize bar_width) {
+    Flt32 percentage = (capacity == 0) ? 0.f : ((Flt32)used_memory / (Flt32)capacity) * 100.f;
+    ByteSize num_blocks = (capacity == 0) ? 0 : (ByteSize)((Flt32)bar_width * (percentage / 100.f));
+
+    // Determine colour based on threshold
+    ConsoleColour colour = CONSOLE_COLOUR_BRIGHT_GREEN;
+    if (percentage >= 75.f) colour = CONSOLE_COLOUR_BRIGHT_RED;
+    if (percentage >= 50.f) colour = CONSOLE_COLOUR_BRIGHT_YELLOW;
+
+    // Draw bar with colour
+    {
+        console_set_foreground(colour);
+        
+        Char output[KYRA_LINE_MAX_LENGTH];
+        memset(output, 0, sizeof(output));
+
+        output[0] = '[';
+        for (ByteSize index = 1; index < bar_width + 1; ++index) {
+            if (index < num_blocks) output[index] = '=';
+            else output[index] = ' ';
+        }
+        output[bar_width] = ']';
+
+        console_write(output);
+        console_reset();
+    }
+
+    // Print percentage, used memory and capacity
+    {
+        Char str_used_memory[KYRA_LINE_MAX_LENGTH];
+        Char str_capacity[KYRA_LINE_MAX_LENGTH];
+
+        _memory_manager_format_bytes(used_memory, str_used_memory, sizeof(str_used_memory));
+        _memory_manager_format_bytes(capacity, str_capacity, sizeof(str_capacity));
+
+        console_write_line(" (%.2f%%) used memory: %s; capacity: %s", percentage, str_used_memory, str_capacity);        
+    }
+}
+
 
 // API functions ------------------------------------------------------------ //
 
@@ -161,19 +228,25 @@ KYRA_ENGINE_API MemoryManagerResult memory_manager_report(void) {
     
     // Memory manager properties
     {
-        printf("Used memory: %llu bytes\n", memory_manager->used_memory);
-        printf("Capacity: %llu bytes\n", memory_manager->capacity);
+        printf("Total:\n");
         printf("Pool address: %p\n", memory_manager->pool);
         printf("Zone count: %u\n", memory_manager->zone_count);
+        
+        // Draw progress bar
+        _memory_manager_draw_progress_bar(memory_manager->used_memory, memory_manager->capacity, 60);
     }
 
     // Memory zones
     {
-        printf("===\nZones:\n");
-
+        printf("\nZones:\n");
         for (ByteSize index = 0; index < memory_manager->zone_count; ++index) {
             MemoryZone *zone = &memory_manager->zones[index];
-            printf("> %s (used memory: %llu bytes; capacity: %llu bytes)\n", zone->name, zone->used_memory, zone->capacity);
+            
+            // The '%-15s' ensures all progress bars start at the same vertical column
+            printf("> %-15s ", zone->name); 
+            
+            // Draw progress bar
+            _memory_manager_draw_progress_bar(zone->used_memory, zone->capacity, 40);
         }
     }
 
