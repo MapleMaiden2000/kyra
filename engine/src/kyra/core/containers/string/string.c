@@ -1513,6 +1513,46 @@ KYRA_ENGINE_API ContainerResult container_string_filter_char(String *string, con
     return CONTAINER_SUCCESS;
 }
 
+KYRA_ENGINE_API ContainerResult container_string_substring(const String string, const ByteSize index, const ByteSize size, String *out_new_substring) {
+    if (!string) return CONTAINER_STRING_ERROR_STRING_NULL;
+    if (index >= string->size) return CONTAINER_STRING_ERROR_INDEX_OUT_OF_BOUNDS;
+    if (!out_new_substring) return CONTAINER_STRING_ERROR_REF_OUT_NEW_SUBSTRING_NULL;
+
+    // Construct empty string for new substring if specified size is zero
+    if (size == 0) return container_string_construct_empty(out_new_substring);
+
+    // Validate specified size
+    ByteSize valid_size = size > (string->size - index) ? (string->size - index) : size;
+
+    // Position for substring
+    ConstStr addr_start = string->data + index;
+
+    // Construct new string
+    {
+        // Compute capacity of string (using aligned size)
+        // Multiply by resize factor to reduce resizings
+        ByteSize capacity = KYRA_APPLY_MEMORY_ALIGNMENT((ByteSize)((Flt32)valid_size * KYRA_CONTAINER_RESIZE_RATIO), KYRA_MEMORY_ALIGNMENT_SIZE);
+
+        // Allocate memory for string
+        ByteSize alloc_size = sizeof(struct Container_String) + capacity;
+        ByteSize mem_size = 0;
+        if (memory_zone_allocate("string", alloc_size, (VoidPtr *)out_new_substring, &mem_size) != MEMORY_ZONE_SUCCESS)
+            return CONTAINER_STRING_ERROR_FAILED_TO_ALLOCATE_MEMORY_FOR_STRING;
+
+        // Copy value to string
+        (*out_new_substring)->data = (Str)KYRA_APPLY_MEMORY_ALIGNMENT((UIntPtr)(*out_new_substring) + sizeof(struct Container_String), KYRA_MEMORY_ALIGNMENT_SIZE);
+        memcpy((*out_new_substring)->data, addr_start, valid_size);
+        (*out_new_substring)->data[valid_size] = '\0';
+
+        // Initialise remaining properties
+        (*out_new_substring)->size = valid_size;
+        (*out_new_substring)->capacity = capacity;
+        (*out_new_substring)->memory_size = mem_size;
+    }
+
+    return CONTAINER_SUCCESS;
+}
+
 KYRA_ENGINE_API ContainerResult container_string_equals(const String left, ConstStr right, Bool *out_result) {
     if (!left || !right) return CONTAINER_STRING_ERROR_STRING_NULL;
 
@@ -1533,7 +1573,6 @@ KYRA_ENGINE_API ContainerResult container_string_equals(const String left, Const
     #if defined(__AVX2__)
     {
         __m256i vec_left, vec_right;
-        __m256i mask_lower = _mm256_set1_epi8(0x20);
         
         while ((index + 32 <= left_size) && (index + 32 <= right_size)) {
             // For current block of 32 characters...
@@ -1560,7 +1599,6 @@ KYRA_ENGINE_API ContainerResult container_string_equals(const String left, Const
     #if defined(__SSE__)
     {
         __m128i vec_left, vec_right;
-        __m128i mask_lower = _mm_set1_epi8(0x20);
         
         while ((index + 16 <= left_size) && (index + 16 <= right_size)) {
             // For current block of 16 characters...
@@ -1569,7 +1607,7 @@ KYRA_ENGINE_API ContainerResult container_string_equals(const String left, Const
             vec_left = _mm_loadu_si128((__m128i *)(left->data + index));
             vec_right = _mm_loadu_si128((__m128i *)(right + index));
             
-            if (_mm_movemask_epi8(_mm_cmpeq_epi8(vec_left, vec_right)) == 0xffff) {
+            if (_mm_movemask_epi8(_mm_cmpeq_epi8(vec_left, vec_right)) != 0xffff) {
                 // Vectors are not equal...
 
                 // Set 'matched' false and exit
@@ -1738,11 +1776,184 @@ KYRA_ENGINE_API ContainerResult container_string_contains(const String string, C
     return CONTAINER_SUCCESS;
 }
 
-
 KYRA_ENGINE_API ContainerResult container_string_contains_string(const String string, const String substr, Bool *out_result) {
     return container_string_contains(string, substr->data, out_result);
 }
 
+KYRA_ENGINE_API ContainerResult container_string_begins_with(const String string, ConstStr prefix, Bool *out_result) {
+    if (!string) return CONTAINER_STRING_ERROR_STRING_NULL;
+    if (!prefix) return CONTAINER_STRING_ERROR_PREFIX_NULL;
+
+    ByteSize string_size = string->size;
+    ByteSize prefix_size = strlen(prefix);
+    if (prefix_size > string->size) return CONTAINER_STRING_ERROR_PREFIX_LONGER_THAN_STRING;
+
+    ByteSize index = 0;
+    Bool matched = true;
+
+    #if defined(__AVX2__)
+    {
+        __m256i vec_str, vec_prefix;
+        
+        while ((index + 32 <= string_size) && (index + 32 <= prefix_size)) {
+            // For current block of 32 characters...
+
+            // Load in 256 bits (32 characters) from current index into memory
+            vec_str = _mm256_loadu_si256((__m256i *)(string->data + index));
+            vec_prefix = _mm256_loadu_si256((__m256i *)(prefix + index));
+            
+            if (_mm256_testz_si256(vec_str, vec_prefix)) {
+                // 'testz' returns 1...
+                // It means the vectors are not equal
+                
+                // Set 'matched' false and exit 
+                matched = false;
+                break;
+            }
+            
+            // Advance to next block (32 characters)
+            index += 32;
+        }
+    }
+    #endif 
+
+    #if defined(__SSE__)
+    {
+        __m128i vec_str, vec_prefix;
+        
+        while ((index + 16 <= string_size) && (index + 16 <= prefix_size)) {
+            // For current block of 16 characters...
+
+            // Load in 128 bits (16 characters) from current index into memory
+            vec_str = _mm_loadu_si128((__m128i *)(string->data + index));
+            vec_prefix = _mm_loadu_si128((__m128i *)(prefix + index));
+            
+            if (_mm_movemask_epi8(_mm_cmpeq_epi8(vec_str, vec_prefix)) != 0xffff) {
+                // Vectors are not equal...
+
+                // Set 'matched' false and exit
+                matched = false;
+                break;
+            }
+            
+            // Advance to next block (16 characters)
+            index += 16;
+        }
+    }
+    #endif 
+
+    // Handle remaining bytes
+    // Also acts as fallback to scalar implementation, in case of no SIMD support
+    while ((index < string_size) && (index < prefix_size)) {
+        if (string->data[index] != prefix[index]) {
+            // Characters are not equal...
+
+            // Set 'matched' false and exit
+            matched = false;
+            break;
+        }
+        
+        // Advance to next character
+        ++index;
+    }
+    
+    // Save to ref
+    if (out_result) *out_result = matched;
+
+    return CONTAINER_SUCCESS;
+}
+
+KYRA_ENGINE_API ContainerResult container_string_begins_with_string(const String string, const String prefix, Bool *out_result) {
+    return container_string_begins_with(string, prefix->data, out_result);
+}
+
+KYRA_ENGINE_API ContainerResult container_string_ends_with(const String string, ConstStr suffix, Bool *out_result) {
+    if (!string) return CONTAINER_STRING_ERROR_STRING_NULL;
+    if (!suffix) return CONTAINER_STRING_ERROR_SUFFIX_NULL;
+
+    ByteSize string_size = string->size;
+    ByteSize suffix_size = strlen(suffix);
+    if (suffix_size > string->size) return CONTAINER_STRING_ERROR_SUFFIX_LONGER_THAN_STRING;
+
+    ByteSize index = 0;
+    Bool matched = true;
+    Str addr_cmp = string->data + string->size - suffix_size;
+
+    #if defined(__AVX2__)
+    {
+        __m256i vec_str, vec_suffix;
+        
+        while (index += 32 <= suffix_size) {
+            // For current block of 32 characters...
+
+            // Load in 256 bits (32 characters) from current index into memory
+            vec_str = _mm256_loadu_si256((__m256i *)(addr_cmp + index));
+            vec_suffix = _mm256_loadu_si256((__m256i *)(suffix + index));
+            
+            if (_mm256_testz_si256(vec_str, vec_suffix)) {
+                // 'testz' returns 1...
+                // It means the vectors are not equal
+                
+                // Set 'matched' false and exit 
+                matched = false;
+                break;
+            }
+            
+            // Advance to block (32 characters)
+            index += 32;
+        }
+    }
+    #endif
+
+    #if defined(__SSE__)
+    {
+        __m128i vec_str, vec_suffix;
+        
+        while (index + 16 <= suffix_size) {
+            // For current block of 16 characters...
+
+            // Load in 128 bits (16 characters) from current index into memory
+            vec_str = _mm_loadu_si128((__m128i *)(addr_cmp + index));
+            vec_suffix = _mm_loadu_si128((__m128i *)(suffix + index));
+            
+            if (_mm_movemask_epi8(_mm_cmpeq_epi8(vec_str, vec_suffix)) != 0xffff) {
+                // Vectors are not equal...
+
+                // Set 'matched' false and exit
+                matched = false;
+                break;
+            }
+            
+            // Advance to next block (16 characters)
+            index += 16;
+        }
+    }
+    #endif
+    
+    // Handle remaining bytes
+    // Also acts as fallback to scalar implementation, in case of no SIMD support
+    while (index < suffix_size) {
+        if (addr_cmp[index] != suffix[index]) {
+            // Characters are not equal...
+
+            // Set 'matched' false and exit
+            matched = false;
+            break;
+        }
+        
+        // Advance to next character
+        ++index;
+    }
+
+    // Save to ref
+    if (out_result) *out_result = matched;
+
+    return CONTAINER_SUCCESS;
+}
+
+KYRA_ENGINE_API ContainerResult container_string_ends_with_string(const String string, const String suffix, Bool *out_result) {
+    return container_string_ends_with(string, suffix->data, out_result);
+}
 
 KYRA_ENGINE_API ContainerResult container_string_to_cstr(const String string, ConstStr *out_cstr) {
     if (!string) return CONTAINER_STRING_ERROR_STRING_NULL;
@@ -1818,11 +2029,16 @@ KYRA_ENGINE_API ConstStr container_string_result_to_string(const ContainerResult
         case CONTAINER_STRING_ERROR_CAPACITY_ZERO:                                          return "CONTAINER_STRING_ERROR_CAPACITY_ZERO";
         case CONTAINER_STRING_ERROR_SUBSTRING_NULL:                                         return "CONTAINER_STRING_ERROR_SUBSTRING_NULL";
         case CONTAINER_STRING_ERROR_SUBSTRING_LONGER_THAN_STRING:                           return "CONTAINER_STRING_ERROR_SUBSTRING_LONGER_THAN_STRING";
+        case CONTAINER_STRING_ERROR_PREFIX_NULL:                                            return "CONTAINER_STRING_ERROR_PREFIX_NULL";
+        case CONTAINER_STRING_ERROR_PREFIX_LONGER_THAN_STRING:                              return "CONTAINER_STRING_ERROR_PREFIX_LONGER_THAN_STRING";
+        case CONTAINER_STRING_ERROR_SUFFIX_NULL:                                            return "CONTAINER_STRING_ERROR_SUFFIX_NULL";
+        case CONTAINER_STRING_ERROR_SUFFIX_LONGER_THAN_STRING:                              return "CONTAINER_STRING_ERROR_SUFFIX_LONGER_THAN_STRING";
         case CONTAINER_STRING_ERROR_INDEX_OUT_OF_BOUNDS:                                    return "CONTAINER_STRING_ERROR_INDEX_OUT_OF_BOUNDS";
         case CONTAINER_STRING_ERROR_LEFT_AND_RIGHT_SIZES_MISMATCHED:                        return "CONTAINER_STRING_ERROR_LEFT_AND_RIGHT_SIZES_MISMATCHED";
         case CONTAINER_STRING_ERROR_REF_OUT_STRING_NULL:                                    return "CONTAINER_STRING_ERROR_REF_OUT_STRING_NULL";
         case CONTAINER_STRING_ERROR_REF_STRING_NULL:                                        return "CONTAINER_STRING_ERROR_REF_STRING_NULL";
         case CONTAINER_STRING_ERROR_REF_STRING_NOT_VALID:                                   return "CONTAINER_STRING_ERROR_REF_STRING_NOT_VALID";
+        case CONTAINER_STRING_ERROR_REF_OUT_NEW_SUBSTRING_NULL:                             return "CONTAINER_STRING_ERROR_REF_OUT_NEW_SUBSTRING_NULL";
         case CONTAINER_STRING_ERROR_FAILED_TO_ALLOCATE_MEMORY_FOR_STRING:                   return "CONTAINER_STRING_ERROR_FAILED_TO_ALLOCATE_MEMORY_FOR_STRING";
         case CONTAINER_STRING_ERROR_FAILED_TO_DEALLOCATE_MEMORY_OF_STRING:                  return "CONTAINER_STRING_ERROR_FAILED_TO_DEALLOCATE_MEMORY_OF_STRING";
         case CONTAINER_STRING_ERROR_FAILED_TO_FIND_ANY_MATCH:                               return "CONTAINER_STRING_ERROR_FAILED_TO_FIND_ANY_MATCH";

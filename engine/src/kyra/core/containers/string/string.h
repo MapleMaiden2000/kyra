@@ -44,6 +44,8 @@ KYRA_ENGINE_API ContainerResult     container_string_trim(String *string);
 
 KYRA_ENGINE_API ContainerResult     container_string_filter_char(String *string, const Char c, const Bool keep);
 
+KYRA_ENGINE_API ContainerResult     container_string_substring(const String string, const ByteSize index, const ByteSize size, String *out_new_substring);
+
 KYRA_ENGINE_API ContainerResult     container_string_equals(const String left, ConstStr right, Bool *out_result);
 KYRA_ENGINE_API ContainerResult     container_string_equals_string(const String left, const String right, Bool *out_result);
 
@@ -52,6 +54,12 @@ KYRA_ENGINE_API ContainerResult     container_string_search_string(const String 
 
 KYRA_ENGINE_API ContainerResult     container_string_contains(const String string, ConstStr substr, Bool *out_result);
 KYRA_ENGINE_API ContainerResult     container_string_contains_string(const String string, const String substr, Bool *out_result);
+
+KYRA_ENGINE_API ContainerResult     container_string_begins_with(const String string, ConstStr prefix, Bool *out_result);
+KYRA_ENGINE_API ContainerResult     container_string_begins_with_string(const String string, const String prefix, Bool *out_result);
+
+KYRA_ENGINE_API ContainerResult     container_string_ends_with(const String string, ConstStr suffix, Bool *out_result);
+KYRA_ENGINE_API ContainerResult     container_string_ends_with_string(const String string, const String suffix, Bool *out_result);
 
 KYRA_ENGINE_API ContainerResult     container_string_to_cstr(const String string, ConstStr *out_cstr);
 KYRA_ENGINE_API ContainerResult     container_string_size(const String string, ByteSize *out_size);

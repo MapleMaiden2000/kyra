@@ -22,14 +22,19 @@ typedef enum Container_Result {
     CONTAINER_STRING_ERROR_STRING_NULL                                          = 103,
     CONTAINER_STRING_ERROR_SUBSTRING_NULL                                       = 104,
     CONTAINER_STRING_ERROR_SUBSTRING_LONGER_THAN_STRING                         = 105,
-    CONTAINER_STRING_ERROR_INDEX_OUT_OF_BOUNDS                                  = 106,
-    CONTAINER_STRING_ERROR_LEFT_AND_RIGHT_SIZES_MISMATCHED                      = 107,
-    CONTAINER_STRING_ERROR_REF_OUT_STRING_NULL                                  = 108,
-    CONTAINER_STRING_ERROR_REF_STRING_NULL                                      = 109,
-    CONTAINER_STRING_ERROR_REF_STRING_NOT_VALID                                 = 110,
-    CONTAINER_STRING_ERROR_FAILED_TO_ALLOCATE_MEMORY_FOR_STRING                 = 111,
-    CONTAINER_STRING_ERROR_FAILED_TO_DEALLOCATE_MEMORY_OF_STRING                = 112,
-    CONTAINER_STRING_ERROR_FAILED_TO_FIND_ANY_MATCH                             = 113
+    CONTAINER_STRING_ERROR_PREFIX_NULL                                          = 106,
+    CONTAINER_STRING_ERROR_PREFIX_LONGER_THAN_STRING                            = 107,
+    CONTAINER_STRING_ERROR_SUFFIX_NULL                                          = 108,
+    CONTAINER_STRING_ERROR_SUFFIX_LONGER_THAN_STRING                            = 109,
+    CONTAINER_STRING_ERROR_INDEX_OUT_OF_BOUNDS                                  = 110,
+    CONTAINER_STRING_ERROR_LEFT_AND_RIGHT_SIZES_MISMATCHED                      = 111,
+    CONTAINER_STRING_ERROR_REF_OUT_STRING_NULL                                  = 112,
+    CONTAINER_STRING_ERROR_REF_STRING_NULL                                      = 113,
+    CONTAINER_STRING_ERROR_REF_STRING_NOT_VALID                                 = 114,
+    CONTAINER_STRING_ERROR_REF_OUT_NEW_SUBSTRING_NULL                           = 115,
+    CONTAINER_STRING_ERROR_FAILED_TO_ALLOCATE_MEMORY_FOR_STRING                 = 116,
+    CONTAINER_STRING_ERROR_FAILED_TO_DEALLOCATE_MEMORY_OF_STRING                = 117,
+    CONTAINER_STRING_ERROR_FAILED_TO_FIND_ANY_MATCH                             = 118
     
 } ContainerResult;
 

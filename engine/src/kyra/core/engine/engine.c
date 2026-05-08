@@ -227,8 +227,6 @@ KYRA_ENGINE_API EngineResult engine_update(Flt32 delta_time) {
     
     KYRA_PRINT_INFO("Updating engine...");
 
-    memory_manager_report();
-
     return ENGINE_SUCCESS;
 }
 
