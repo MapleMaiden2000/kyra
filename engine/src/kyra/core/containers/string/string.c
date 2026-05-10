@@ -594,7 +594,6 @@ KYRA_ENGINE_API ContainerResult container_string_remove_chars(String *string, co
     return CONTAINER_SUCCESS;
 }
 
-
 KYRA_ENGINE_API ContainerResult container_string_remove_at(String *string, const ByteSize index, const ByteSize count) {
     if (!string) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
     if (index > (*string)->size) return CONTAINER_STRING_ERROR_INDEX_OUT_OF_BOUNDS;
