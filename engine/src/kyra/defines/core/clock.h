@@ -20,6 +20,10 @@ typedef enum Clock_Result {
     CLOCK_ERROR_WALL_FAILED_TO_PARSE_DATETIME       = -5,
 
 
+    // --- High-resolution clock --- //
+
+    CLOCK_ERROR_HIRES_REF_OUT_HIRES_CLOCK_NULL      = -100,
+
 } ClockResult;
 
 
@@ -77,4 +81,46 @@ typedef struct WallClock_DateTime {
 } WallClockDateTime;
 
 
+// High-resolution clock ---------------------------------------- //
+
+#if KYRA_PLATFORM_WINDOWS
+    // For Windows... 
+
+    #include <windows.h>
+
+    typedef LARGE_INTEGER HiResTick, HiResInterval, HiResTimestamp, HiResCounter;
+
+    typedef struct HiRes_Clock_Handle {
+        HiResCounter        counter;
+        HiResTimestamp      timestamp;
+    } HiResClock;
+
+#elif KYRA_PLATFORM_LINUX
+    // For Linux...
+
+    #include <unistd.h>
+
+    typedef struct timespec HiResTimeSpec;
+
+    typedef struct HiRes_Clock_Handle {
+        HiResTimeSpec       time_spec;
+    } HiResClock;
+
+#elif KYRA_PLATFORM_MACOS
+    // For MacOS...
+
+    #include <mach/mach_time.h>
+
+    typedef UInt64                      HiResTick, HiResInterval, HiResTimestamp;
+    typedef mach_timebase_info_data_t   HiResTimeBaseInfo;
+
+    typedef struct HiRes_Clock_Handle {
+        HiResTimeBaseInfo   time_base_info;
+        HiResTimestamp      timestamp;
+    } HiResClock;
+
+#else
+    #error "Unsupported platform!"    
+
+#endif
 
