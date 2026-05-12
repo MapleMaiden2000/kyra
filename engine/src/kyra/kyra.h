@@ -14,6 +14,8 @@
 #include "kyra/defines/core/memory.h"
 #include "kyra/defines/core/console.h"
 #include "kyra/defines/core/containers.h"
+#include "kyra/defines/core/clock.h"
+#include "kyra/defines/core/hash.h"
 
 // Core engine systems
 #include "kyra/core/platform/filesystem/filesystem.h"
@@ -21,6 +23,9 @@
 #include "kyra/core/memory/zone/memory_zone.h"
 #include "kyra/core/misc/console/console.h"
 #include "kyra/core/containers/string/string.h"
+#include "kyra/core/hal/clock/wall/wall.h"
+#include "kyra/core/hal/clock/hi_res/hi_res.h"
+#include "kyra/core/hash/hash.h"
 #include "kyra/core/engine/engine.h"
 
 // Application and Entry point
