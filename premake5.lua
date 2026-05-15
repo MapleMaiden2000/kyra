@@ -38,6 +38,7 @@ project "engine"
         "KYRA_LINE_MAX_LENGTH=1024",
         "KYRA_MEMORY_ALIGNMENT_SIZE=16",
         "KYRA_CONTAINER_RESIZE_RATIO=1.618f",
+        "KYRA_CONTAINER_DEFAULT_CAPACITY=16"
     }    
 
     files {

@@ -34,12 +34,40 @@ typedef enum Container_Result {
     CONTAINER_STRING_ERROR_REF_OUT_NEW_SUBSTRING_NULL                           = 115,
     CONTAINER_STRING_ERROR_FAILED_TO_ALLOCATE_MEMORY_FOR_STRING                 = 116,
     CONTAINER_STRING_ERROR_FAILED_TO_DEALLOCATE_MEMORY_OF_STRING                = 117,
-    CONTAINER_STRING_ERROR_FAILED_TO_FIND_ANY_MATCH                             = 118
+    CONTAINER_STRING_ERROR_FAILED_TO_FIND_ANY_MATCH                             = 118,
     
+
+    // -- Map -- //
+
+    CONTAINER_MAP_HELPER_ERROR_REF_MAP_NULL                                     = -200,
+    CONTAINER_MAP_HELPER_ERROR_OLD_SLOT_NULL                                    = -201,
+    CONTAINER_MAP_HELPER_ERROR_FAILED_TO_COPY_OLD_SLOT_KEY                      = -202,
+    CONTAINER_MAP_HELPER_ERROR_NEW_CAPACITY_SHORTER_THAN_MAP_SIZE               = -203,
+    CONTAINER_MAP_HELPER_ERROR_FAILED_TO_ALLOCATE_MEMORY_FOR_NEW_MAP            = -204,
+    CONTAINER_MAP_HELPER_ERROR_FAILED_TO_DEALLOCATE_NEW_MAP                     = -205,
+    CONTAINER_MAP_HELPER_ERROR_REHASH_INSERT_FAILED                             = -206,
+    CONTAINER_MAP_HELPER_ERROR_FAILED_TO_DEALLOCATE_OLD_MAP                     = -207,
+
+    CONTAINER_MAP_ERROR_DATA_SIZE_ZERO                                          = 200,
+    CONTAINER_MAP_ERROR_REF_OUT_MAP_NULL                                        = 201,
+    CONTAINER_MAP_ERROR_REF_MAP_NULL                                            = 202,
+    CONTAINER_MAP_ERROR_MAP_NULL                                                = 203,
+    CONTAINER_MAP_ERROR_KEY_NULL                                                = 204,
+    CONTAINER_MAP_ERROR_VALUE_NULL                                              = 205,
+    CONTAINER_MAP_ERROR_NEW_VALUE_NULL                                          = 206,
+    CONTAINER_MAP_ERROR_INDEX_OUT_OF_BOUNDS                                     = 207,
+    CONTAINER_MAP_ERROR_FAILED_TO_ALLOCATE_MEMORY_FOR_NEW_MAP                   = 208,
+    CONTAINER_MAP_ERROR_FAILED_TO_DEALLOCATE_MAP                                = 209,
+    CONTAINER_MAP_ERROR_FAILED_TO_CONSTRUCT_SLOT_KEY                            = 210,
+    CONTAINER_MAP_ERROR_FAILED_TO_LOCATE_SLOT_FOR_KEY                           = 211,
+    CONTAINER_MAP_ERROR_FAILED_TO_LOCATE_SLOT_FOR_INDEX                         = 212,
+    CONTAINER_MAP_ERROR_REACHED_PROBING_LIMIT                                   = 213,
+
 } ContainerResult;
 
 
 // Types ----------------------------------------------------------- //
 
 typedef struct Container_String             *String;
+typedef struct Container_Map                *Map;
 

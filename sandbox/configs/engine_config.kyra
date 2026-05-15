@@ -6,7 +6,8 @@
     
     "memory": {
         "zones": {
-            "string": "4 MB"
+            "string": "4 MB",
+            "containers": "12 MB"
         }
     }
 }

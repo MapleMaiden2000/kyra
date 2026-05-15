@@ -23,6 +23,7 @@
 #include "kyra/core/memory/zone/memory_zone.h"
 #include "kyra/core/misc/console/console.h"
 #include "kyra/core/containers/string/string.h"
+#include "kyra/core/containers/map/map.h"
 #include "kyra/core/hal/clock/wall/wall.h"
 #include "kyra/core/hal/clock/hi_res/hi_res.h"
 #include "kyra/core/hash/hash.h"
