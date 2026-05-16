@@ -61,16 +61,9 @@ KYRA_ENGINE_API ContainerResult     container_string_begins_with_string(const St
 KYRA_ENGINE_API ContainerResult     container_string_ends_with(const String string, ConstStr suffix, Bool *out_result);
 KYRA_ENGINE_API ContainerResult     container_string_ends_with_string(const String string, const String suffix, Bool *out_result);
 
-KYRA_ENGINE_API ContainerResult     container_string_to_cstr(const String string, ConstStr *out_cstr);
-KYRA_ENGINE_API ContainerResult     container_string_size(const String string, ByteSize *out_size);
-KYRA_ENGINE_API ContainerResult     container_string_capacity(const String string, ByteSize *out_capacity);
-KYRA_ENGINE_API ContainerResult     container_string_is_empty(const String string, Bool *out_result);
-
-KYRA_ENGINE_API ConstStr            container_string_get_cstr(const String string);
-KYRA_ENGINE_API ByteSize            container_string_get_size(const String string);
-KYRA_ENGINE_API ByteSize            container_string_get_capacity(const String string);
-KYRA_ENGINE_API Bool                container_string_get_is_empty(const String string);
+KYRA_ENGINE_API ConstStr            container_string_cstr(const String string);
+KYRA_ENGINE_API ByteSize            container_string_size(const String string);
+KYRA_ENGINE_API ByteSize            container_string_capacity(const String string);
+KYRA_ENGINE_API Bool                container_string_is_empty(const String string);
 
 KYRA_ENGINE_API ConstStr            container_string_result_to_string(const ContainerResult result);
-
-

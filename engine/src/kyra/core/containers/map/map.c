@@ -79,7 +79,7 @@ static ContainerResult _container_map_rehash_insert(Map *map, const MapDataItem 
     check_slot->addr_value = (UIntPtr)((BytePtr)check_slot + sizeof(MapDataItem));
 
     // Copy over old slot key
-    if (container_string_construct(container_string_get_cstr(old_slot->key), &check_slot->key) != CONTAINER_SUCCESS) {
+    if (container_string_construct(container_string_cstr(old_slot->key), &check_slot->key) != CONTAINER_SUCCESS) {
         // Failed...
 
         return CONTAINER_MAP_HELPER_ERROR_FAILED_TO_COPY_OLD_SLOT_KEY;
@@ -218,7 +218,7 @@ KYRA_ENGINE_API ContainerResult container_map_destruct(Map *map) {
     }
 
     // Deallocate map
-    if (memory_zone_deallocate("containers", (*map), (*map)->memory_size) != MEMORY_ZONE_SUCCESS) 
+    if (memory_zone_deallocate("containers", (VoidPtr)(*map), (*map)->memory_size) != MEMORY_ZONE_SUCCESS) 
         return CONTAINER_MAP_ERROR_FAILED_TO_DEALLOCATE_MAP;
 
     // Set to NULL
@@ -528,26 +528,54 @@ KYRA_ENGINE_API Bool container_map_is_empty(const Map map) {
     return (map->size == 0);
 }
 
-KYRA_ENGINE_API ByteSize container_map_get_data_size(const Map map) {
+KYRA_ENGINE_API ByteSize container_map_data_size(const Map map) {
     if (!map) return 0;
 
     return map->data_size;
 }
 
-KYRA_ENGINE_API ByteSize container_map_get_size(const Map map) {
+KYRA_ENGINE_API ByteSize container_map_size(const Map map) {
     if (!map) return 0;
 
     return map->size;
 }
 
-KYRA_ENGINE_API ByteSize container_map_get_capacity(const Map map) {
+KYRA_ENGINE_API ByteSize container_map_capacity(const Map map) {
     if (!map) return 0;
 
     return map->capacity;
 }
 
 KYRA_ENGINE_API ConstStr container_map_result_to_string(const ContainerResult result) {
-
+    switch (result) {
+        case CONTAINER_SUCCESS:                                                             return "CONTAINER_SUCCESS";
+        
+        case CONTAINER_MAP_HELPER_ERROR_REF_MAP_NULL:                                       return "CONTAINER_MAP_HELPER_ERROR_REF_MAP_NULL";
+        case CONTAINER_MAP_HELPER_ERROR_OLD_SLOT_NULL:                                      return "CONTAINER_MAP_HELPER_ERROR_OLD_SLOT_NULL";
+        case CONTAINER_MAP_HELPER_ERROR_FAILED_TO_COPY_OLD_SLOT_KEY:                        return "CONTAINER_MAP_HELPER_ERROR_FAILED_TO_COPY_OLD_SLOT_KEY";
+        case CONTAINER_MAP_HELPER_ERROR_NEW_CAPACITY_SHORTER_THAN_MAP_SIZE:                 return "CONTAINER_MAP_HELPER_ERROR_NEW_CAPACITY_SHORTER_THAN_MAP_SIZE";
+        case CONTAINER_MAP_HELPER_ERROR_FAILED_TO_ALLOCATE_MEMORY_FOR_NEW_MAP:              return "CONTAINER_MAP_HELPER_ERROR_FAILED_TO_ALLOCATE_MEMORY_FOR_NEW_MAP";
+        case CONTAINER_MAP_HELPER_ERROR_FAILED_TO_DEALLOCATE_NEW_MAP:                       return "CONTAINER_MAP_HELPER_ERROR_FAILED_TO_DEALLOCATE_NEW_MAP";
+        case CONTAINER_MAP_HELPER_ERROR_REHASH_INSERT_FAILED:                               return "CONTAINER_MAP_HELPER_ERROR_REHASH_INSERT_FAILED";
+        case CONTAINER_MAP_HELPER_ERROR_FAILED_TO_DEALLOCATE_OLD_MAP:                       return "CONTAINER_MAP_HELPER_ERROR_FAILED_TO_DEALLOCATE_OLD_MAP";
+        
+        case CONTAINER_MAP_ERROR_DATA_SIZE_ZERO:                                            return "CONTAINER_MAP_ERROR_DATA_SIZE_ZERO";
+        case CONTAINER_MAP_ERROR_REF_OUT_MAP_NULL:                                          return "CONTAINER_MAP_ERROR_REF_OUT_MAP_NULL";
+        case CONTAINER_MAP_ERROR_REF_MAP_NULL:                                              return "CONTAINER_MAP_ERROR_REF_MAP_NULL";
+        case CONTAINER_MAP_ERROR_MAP_NULL:                                                  return "CONTAINER_MAP_ERROR_MAP_NULL";
+        case CONTAINER_MAP_ERROR_KEY_NULL:                                                  return "CONTAINER_MAP_ERROR_KEY_NULL";
+        case CONTAINER_MAP_ERROR_VALUE_NULL:                                                return "CONTAINER_MAP_ERROR_VALUE_NULL";
+        case CONTAINER_MAP_ERROR_NEW_VALUE_NULL:                                            return "CONTAINER_MAP_ERROR_NEW_VALUE_NULL";
+        case CONTAINER_MAP_ERROR_INDEX_OUT_OF_BOUNDS:                                       return "CONTAINER_MAP_ERROR_INDEX_OUT_OF_BOUNDS";
+        case CONTAINER_MAP_ERROR_FAILED_TO_ALLOCATE_MEMORY_FOR_NEW_MAP:                     return "CONTAINER_MAP_ERROR_FAILED_TO_ALLOCATE_MEMORY_FOR_NEW_MAP";
+        case CONTAINER_MAP_ERROR_FAILED_TO_DEALLOCATE_MAP:                                  return "CONTAINER_MAP_ERROR_FAILED_TO_DEALLOCATE_MAP";
+        case CONTAINER_MAP_ERROR_FAILED_TO_CONSTRUCT_SLOT_KEY:                              return "CONTAINER_MAP_ERROR_FAILED_TO_CONSTRUCT_SLOT_KEY";
+        case CONTAINER_MAP_ERROR_FAILED_TO_LOCATE_SLOT_FOR_KEY:                             return "CONTAINER_MAP_ERROR_FAILED_TO_LOCATE_SLOT_FOR_KEY";
+        case CONTAINER_MAP_ERROR_FAILED_TO_LOCATE_SLOT_FOR_INDEX:                           return "CONTAINER_MAP_ERROR_FAILED_TO_LOCATE_SLOT_FOR_INDEX";
+        case CONTAINER_MAP_ERROR_REACHED_PROBING_LIMIT:                                     return "CONTAINER_MAP_ERROR_REACHED_PROBING_LIMIT";
+    
+        default:                                                                            return "UNKNOWN_CONTAINER_RESULT";
+    }
 }
 
 

@@ -1954,61 +1954,25 @@ KYRA_ENGINE_API ContainerResult container_string_ends_with_string(const String s
     return container_string_ends_with(string, suffix->data, out_result);
 }
 
-KYRA_ENGINE_API ContainerResult container_string_to_cstr(const String string, ConstStr *out_cstr) {
-    if (!string) return CONTAINER_STRING_ERROR_STRING_NULL;
-
-    // Save to ref
-    if (out_cstr) *out_cstr = string->data;
-
-    return CONTAINER_SUCCESS;
-}
-
-KYRA_ENGINE_API ContainerResult container_string_size(const String string, ByteSize *out_size) {
-    if (!string) return CONTAINER_STRING_ERROR_STRING_NULL;
-
-    // Save to ref
-    if (out_size) *out_size = string->size;
-
-    return CONTAINER_SUCCESS;
-}
-
-KYRA_ENGINE_API ContainerResult container_string_capacity(const String string, ByteSize *out_capacity) {
-    if (!string) return CONTAINER_STRING_ERROR_STRING_NULL;
-
-    // Save to ref
-    if (out_capacity) *out_capacity = string->capacity;
-
-    return CONTAINER_SUCCESS;
-}
-
-KYRA_ENGINE_API ContainerResult container_string_is_empty(const String string, Bool *out_result) {
-    if (!string) return CONTAINER_STRING_ERROR_STRING_NULL;
-
-    // Save to ref
-    if (out_result) *out_result = (string->size == 0);
-
-    return CONTAINER_SUCCESS;
-}
-
-KYRA_ENGINE_API ConstStr container_string_get_cstr(const String string) {
+KYRA_ENGINE_API ConstStr container_string_cstr(const String string) {
     if (!string) return NULL;
     
     return string->data;
 }
 
-KYRA_ENGINE_API ByteSize container_string_get_size(const String string) {
+KYRA_ENGINE_API ByteSize container_string_size(const String string) {
     if (!string) return 0;
     
     return string->size;
 }
 
-KYRA_ENGINE_API ByteSize container_string_get_capacity(const String string) {
+KYRA_ENGINE_API ByteSize container_string_capacity(const String string) {
     if (!string) return 0;
     
     return string->capacity;
 }
 
-KYRA_ENGINE_API Bool container_string_get_is_empty(const String string) {
+KYRA_ENGINE_API Bool container_string_is_empty(const String string) {
     if (!string) return true;
 
     return (string->size == 0);

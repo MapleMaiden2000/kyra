@@ -20,8 +20,8 @@ KYRA_ENGINE_API ContainerResult     container_map_at_index(const Map map, const 
 
 KYRA_ENGINE_API Bool                container_map_contains(const Map map, ConstStr key);
 KYRA_ENGINE_API Bool                container_map_is_empty(const Map map);
-KYRA_ENGINE_API ByteSize            container_map_get_data_size(const Map map);
-KYRA_ENGINE_API ByteSize            container_map_get_size(const Map map);
-KYRA_ENGINE_API ByteSize            container_map_get_capacity(const Map map);
+KYRA_ENGINE_API ByteSize            container_map_data_size(const Map map);
+KYRA_ENGINE_API ByteSize            container_map_size(const Map map);
+KYRA_ENGINE_API ByteSize            container_map_capacity(const Map map);
 
 KYRA_ENGINE_API ConstStr            container_map_result_to_string(const ContainerResult result);

@@ -63,6 +63,22 @@ typedef enum Container_Result {
     CONTAINER_MAP_ERROR_FAILED_TO_LOCATE_SLOT_FOR_INDEX                         = 212,
     CONTAINER_MAP_ERROR_REACHED_PROBING_LIMIT                                   = 213,
 
+
+    // -- Array -- //
+
+    CONTAINER_ARRAY_HELPER_ERROR_ARRAY_NULL                                     = -300,
+    CONTAINER_ARRAY_HELPER_ERROR_NEW_CAPACITY_ZERO                              = -301,
+    CONTAINER_ARRAY_HELPER_ERROR_FAILED_TO_ALLOCATE_MEMORY_FOR_NEW_ARRAY        = -302,
+
+    CONTAINER_ARRAY_ERROR_DATA_SIZE_ZERO                                        = 301,
+    CONTAINER_ARRAY_ERROR_DATA_NULL                                             = 302,
+    CONTAINER_ARRAY_ERROR_INDEX_OUT_OF_BOUNDS                                   = 303,
+    CONTAINER_ARRAY_ERROR_INVALID_COMPARE_FUNCPTR                               = 304,
+    CONTAINER_ARRAY_ERROR_REF_OUT_ARRAY_NULL                                    = 305,
+    CONTAINER_ARRAY_ERROR_REF_ARRAY_NULL                                        = 306,
+    CONTAINER_ARRAY_ERROR_FAILED_TO_ALLOCATE_MEMORY_FOR_ARRAY                   = 307,
+    CONTAINER_ARRAY_ERROR_FAILED_TO_DEALLOCATE_MEMORY_OF_ARRAY                  = 308,
+
 } ContainerResult;
 
 
@@ -70,4 +86,4 @@ typedef enum Container_Result {
 
 typedef struct Container_String             *String;
 typedef struct Container_Map                *Map;
-
+typedef struct Container_Array              *Array;
