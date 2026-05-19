@@ -72,12 +72,13 @@ typedef enum Container_Result {
 
     CONTAINER_ARRAY_ERROR_DATA_SIZE_ZERO                                        = 301,
     CONTAINER_ARRAY_ERROR_DATA_NULL                                             = 302,
-    CONTAINER_ARRAY_ERROR_INDEX_OUT_OF_BOUNDS                                   = 303,
-    CONTAINER_ARRAY_ERROR_INVALID_COMPARE_FUNCPTR                               = 304,
-    CONTAINER_ARRAY_ERROR_REF_OUT_ARRAY_NULL                                    = 305,
-    CONTAINER_ARRAY_ERROR_REF_ARRAY_NULL                                        = 306,
-    CONTAINER_ARRAY_ERROR_FAILED_TO_ALLOCATE_MEMORY_FOR_ARRAY                   = 307,
-    CONTAINER_ARRAY_ERROR_FAILED_TO_DEALLOCATE_MEMORY_OF_ARRAY                  = 308,
+    CONTAINER_ARRAY_ERROR_RAW_ARRAY_NULL                                        = 303,
+    CONTAINER_ARRAY_ERROR_INDEX_OUT_OF_BOUNDS                                   = 304,
+    CONTAINER_ARRAY_ERROR_INVALID_COMPARE_FUNCPTR                               = 305,
+    CONTAINER_ARRAY_ERROR_REF_OUT_ARRAY_NULL                                    = 306,
+    CONTAINER_ARRAY_ERROR_REF_ARRAY_NULL                                        = 307,
+    CONTAINER_ARRAY_ERROR_FAILED_TO_ALLOCATE_MEMORY_FOR_ARRAY                   = 308,
+    CONTAINER_ARRAY_ERROR_FAILED_TO_DEALLOCATE_MEMORY_OF_ARRAY                  = 309,
 
 } ContainerResult;
 

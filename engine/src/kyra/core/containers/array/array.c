@@ -86,7 +86,44 @@ KYRA_ENGINE_API ContainerResult container_array_construct(const ByteSize data_si
     }
 
     // Set array elements to zero
-    memset((*out_array)->data, 0, data_size * KYRA_CONTAINER_DEFAULT_CAPACITY);
+    memset((*out_array)->data, 0, KYRA_CONTAINER_DEFAULT_CAPACITY * data_size);
+
+    return CONTAINER_SUCCESS;
+}
+
+KYRA_ENGINE_API ContainerResult container_array_construct_from_raw(const ByteSize data_size, const VoidPtr raw_array, const ByteSize element_count, Array *out_array) {
+    if (data_size == 0) return CONTAINER_ARRAY_ERROR_DATA_SIZE_ZERO;
+    if (!raw_array) return CONTAINER_ARRAY_ERROR_RAW_ARRAY_NULL;
+    if (!out_array) return CONTAINER_ARRAY_ERROR_REF_OUT_ARRAY_NULL;
+
+    // Determine optimal capacity
+    // Align capacity to prevent sub-allocation overflows
+    ByteSize capacity = element_count > KYRA_CONTAINER_DEFAULT_CAPACITY ? element_count : KYRA_CONTAINER_DEFAULT_CAPACITY;
+    capacity = KYRA_APPLY_MEMORY_ALIGNMENT(capacity, KYRA_MEMORY_ALIGNMENT_SIZE);
+
+    // Calculate allocation size
+    ByteSize pool_size = capacity * data_size;
+    ByteSize alloc_size = KYRA_APPLY_MEMORY_ALIGNMENT(sizeof(struct Container_Array) + pool_size, KYRA_MEMORY_ALIGNMENT_SIZE);
+    ByteSize mem_size = 0;
+
+    // Allocate array
+    if (memory_zone_allocate("containers", alloc_size, (VoidPtr *)out_array, &mem_size) != MEMORY_ZONE_SUCCESS)
+        return CONTAINER_ARRAY_ERROR_FAILED_TO_ALLOCATE_MEMORY_FOR_ARRAY;
+
+    // Initialise array properties
+    {
+        (*out_array)->data_size = data_size;
+        (*out_array)->size = element_count;
+        (*out_array)->capacity = capacity;
+        (*out_array)->memory_size = mem_size;
+        (*out_array)->data = (VoidPtr)KYRA_APPLY_MEMORY_ALIGNMENT((UIntPtr)(*out_array) + sizeof(struct Container_Array), KYRA_MEMORY_ALIGNMENT_SIZE);
+    }
+
+    // Set array elements to zero
+    memset((*out_array)->data, 0, capacity * data_size);
+
+    // Copy data from raw array
+    memcpy((*out_array)->data, raw_array, element_count * data_size);
 
     return CONTAINER_SUCCESS;
 }
@@ -326,6 +363,7 @@ KYRA_ENGINE_API ConstStr container_array_result_to_string(const ContainerResult 
         
         case CONTAINER_ARRAY_ERROR_DATA_SIZE_ZERO:                                          return "CONTAINER_ARRAY_ERROR_DATA_SIZE_ZERO";
         case CONTAINER_ARRAY_ERROR_DATA_NULL:                                               return "CONTAINER_ARRAY_ERROR_DATA_NULL";
+        case CONTAINER_ARRAY_ERROR_RAW_ARRAY_NULL:                                          return "CONTAINER_ARRAY_ERROR_RAW_ARRAY_NULL";
         case CONTAINER_ARRAY_ERROR_INDEX_OUT_OF_BOUNDS:                                     return "CONTAINER_ARRAY_ERROR_INDEX_OUT_OF_BOUNDS";
         case CONTAINER_ARRAY_ERROR_INVALID_COMPARE_FUNCPTR:                                 return "CONTAINER_ARRAY_ERROR_INVALID_COMPARE_FUNCPTR";
         case CONTAINER_ARRAY_ERROR_REF_OUT_ARRAY_NULL:                                      return "CONTAINER_ARRAY_ERROR_REF_OUT_ARRAY_NULL";

@@ -8,6 +8,7 @@
 // API functions --------------------------------------------------- //
 
 KYRA_ENGINE_API ContainerResult     container_array_construct(const ByteSize data_size, Array *out_array);
+KYRA_ENGINE_API ContainerResult     container_array_construct_from_raw(const ByteSize data_size, const VoidPtr raw_array, const ByteSize element_count, Array *out_array);
 KYRA_ENGINE_API ContainerResult     container_array_destruct(Array *array);
 
 KYRA_ENGINE_API ContainerResult     container_array_push(Array *array, const VoidPtr data);
