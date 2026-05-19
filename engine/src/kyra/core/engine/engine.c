@@ -10,6 +10,7 @@
 #include "kyra/core/memory/manager/memory_manager.h"
 #include "kyra/core/memory/zone/memory_zone.h"
 #include "kyra/core/misc/console/console.h"
+#include "kyra/core/containers/array/array.h"
 #include "kyra/core/containers/string/string.h"
 
 
@@ -226,9 +227,7 @@ KYRA_ENGINE_API EngineResult engine_update(Flt32 delta_time) {
     if (!state) return ENGINE_UPDATE_ERROR_STATE_NOT_INITIALISED;
     
     KYRA_PRINT_INFO("Updating engine...");
-
-    memory_manager_report();
-
+    
     return ENGINE_SUCCESS;
 }
 

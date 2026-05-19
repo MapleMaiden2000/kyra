@@ -111,6 +111,7 @@ KYRA_ENGINE_API MemoryZoneResult memory_zone_clear(ConstStr name) {
 
     // Reset 'used memory' for zone
     zone->used_memory = 0;
+    zone->pool_offset = 0;
 
     return MEMORY_ZONE_SUCCESS;
 }
@@ -168,14 +169,15 @@ KYRA_ENGINE_API MemoryZoneResult memory_zone_allocate(ConstStr name, const ByteS
     }
 
     // Check if there is enough memory to allocate
-    if (zone->used_memory + size_class->size > zone->capacity) return MEMORY_ZONE_ERROR_INSUFFICIENT_MEMORY_TO_ALLOCATE;
+    if (zone->pool_offset + size_class->size > zone->capacity) return MEMORY_ZONE_ERROR_INSUFFICIENT_MEMORY_TO_ALLOCATE;
 
     // Allocate from memory pool
-    if (out_addr)           *out_addr = (VoidPtr)(zone->addr_start + zone->used_memory);
+    if (out_addr)           *out_addr = (VoidPtr)(zone->addr_start + zone->pool_offset);
     if (out_alloc_size)     *out_alloc_size = size_class->size;
 
-    // Update 'used memory' for zone and manager
+    // Update 'used memory' and 'pool offset' for zone and manager
     zone->used_memory += size_class->size;
+    zone->pool_offset += size_class->size;
     manager->used_memory += size_class->size;
 
     return MEMORY_ZONE_SUCCESS;

@@ -138,10 +138,10 @@ KYRA_ENGINE_API MemoryManagerResult memory_manager_startup(const MemoryConfig *c
         total_capacity += config->zones[index].capacity;
     }
 
-    // Compute total memory required
-    ByteSize manager_size = sizeof(MemoryManager);
-    ByteSize zone_headers_size = sizeof(MemoryZone) * config->zone_count;
-    ByteSize size_class_headers_size = sizeof(MemoryZoneSizeClass) * total_size_classes;
+    // Compute total memory required (ensuring 16-byte alignment for each section)
+    ByteSize manager_size = KYRA_APPLY_MEMORY_ALIGNMENT(sizeof(MemoryManager), KYRA_MEMORY_ALIGNMENT_SIZE);
+    ByteSize zone_headers_size = KYRA_APPLY_MEMORY_ALIGNMENT(sizeof(MemoryZone) * config->zone_count, KYRA_MEMORY_ALIGNMENT_SIZE);
+    ByteSize size_class_headers_size = KYRA_APPLY_MEMORY_ALIGNMENT(sizeof(MemoryZoneSizeClass) * total_size_classes, KYRA_MEMORY_ALIGNMENT_SIZE);
     ByteSize total_alloc_size = manager_size + zone_headers_size + size_class_headers_size + total_capacity;
 
     // Allocate one large block
@@ -167,6 +167,7 @@ KYRA_ENGINE_API MemoryManagerResult memory_manager_startup(const MemoryConfig *c
         zone->name = _strdup(config->zones[index].name);
         zone->capacity = config->zones[index].capacity;
         zone->used_memory = 0;
+        zone->pool_offset = 0;
         zone->addr_start = addr_block;
 
         // Compute number of size classes

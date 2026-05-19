@@ -61,6 +61,7 @@ typedef struct Memory_Zone {
     UIntPtr                 addr_start;
 
     ByteSize                used_memory;
+    ByteSize                pool_offset;
     ByteSize                capacity;
 
     MemoryZoneSizeClass    *size_classes;

@@ -369,7 +369,7 @@ KYRA_ENGINE_API ContainerResult container_string_append_formatted(String *string
     va_end(args);
     
     // Calculate new size
-    ByteSize new_size = string_size + vsnprintf(NULL, 0, format, args);
+    ByteSize new_size = string_size + formatted_size;
 
     if (new_size >= (*string)->capacity) {
         // New size is larger than current string capacity...
