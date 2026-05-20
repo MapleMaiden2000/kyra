@@ -88,7 +88,7 @@ KYRA_ENGINE_API DelegateResult delegate_unicast_shutdown(void) {
     return DELEGATE_SUCCESS;
 }
 
-KYRA_ENGINE_API DelegateResult delegate_unicast_bind(ConstStr id, const Listener listener, const DelegateFunction callback) {
+KYRA_ENGINE_API DelegateResult delegate_unicast_register(ConstStr id, const Listener listener, const DelegateFunction callback) {
     if (!state) return DELEGATE_UNICAST_ERROR_NOT_INITIALISED;
     if (!id) return DELEGATE_UNICAST_ERROR_DELEGATE_ID_NULL;
     if (!callback) return DELEGATE_UNICAST_ERROR_DELEGATE_CALLBACK_NULL;
@@ -102,9 +102,9 @@ KYRA_ENGINE_API DelegateResult delegate_unicast_bind(ConstStr id, const Listener
         // Delegate is already registered...
         
         if (delegate) {
-            // Update delegate listener and callback if not NULL
-            if (listener) delegate->listener = listener;
-            if (callback) delegate->callback = callback;
+            // Update delegate listener and callback
+            delegate->listener = listener;
+            delegate->callback = callback;
         }
 
         return DELEGATE_SUCCESS;
@@ -136,7 +136,7 @@ KYRA_ENGINE_API DelegateResult delegate_unicast_bind(ConstStr id, const Listener
     return DELEGATE_SUCCESS;
 }
 
-KYRA_ENGINE_API DelegateResult delegate_unicast_unbind(ConstStr id) {
+KYRA_ENGINE_API DelegateResult delegate_unicast_unregister(ConstStr id) {
     if (!state) return DELEGATE_UNICAST_ERROR_NOT_INITIALISED;
     if (!id) return DELEGATE_UNICAST_ERROR_DELEGATE_ID_NULL;
 

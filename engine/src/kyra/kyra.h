@@ -30,6 +30,7 @@
 #include "kyra/core/hal/clock/hi_res/hi_res.h"
 #include "kyra/core/hash/hash.h"
 #include "kyra/core/delegates/unicast/unicast.h"
+#include "kyra/core/delegates/multicast/multicast.h"
 #include "kyra/core/engine/engine.h"
 
 // Application and Entry point
