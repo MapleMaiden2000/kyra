@@ -18,6 +18,8 @@ KYRA_ENGINE_API ContainerResult     container_array_insert(Array *array, const B
 KYRA_ENGINE_API ContainerResult     container_array_remove(Array *array, const VoidPtr data, const Bool remove_all);
 KYRA_ENGINE_API ContainerResult     container_array_remove_at(Array *array, const ByteSize index);
 
+KYRA_ENGINE_API ContainerResult     container_array_update_at(Array *array, const ByteSize index, const VoidPtr data);
+
 KYRA_ENGINE_API ContainerResult     container_array_clear(Array *array);
 KYRA_ENGINE_API ContainerResult     container_array_sort(Array *array, Int32 (*compare)(const VoidPtr left, const VoidPtr right));
 

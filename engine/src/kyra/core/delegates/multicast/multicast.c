@@ -150,8 +150,9 @@ KYRA_ENGINE_API DelegateResult delegate_multicast_register(ConstStr id, const Li
             }
         }
 
-        // Assign memory size
+        // Assign memory size and invoke depth
         delegate->memory_size = mem_size;
+        delegate->invoke_depth = 0;
 
         // Register delegate to map
         {
@@ -214,31 +215,37 @@ KYRA_ENGINE_API DelegateResult delegate_multicast_unregister(ConstStr id, const 
             if (ls == listener) {
                 // Matched specified listener...
 
-                // Remove from both arrays
-                container_array_remove_at(&delegate->listeners, index);
-                container_array_remove_at(&delegate->callbacks, index);
+                if (delegate->invoke_depth > 0) {
+                    DelegateFunction empty_callback =  NULL;
+                    container_array_update_at(&delegate->callbacks, index, &empty_callback);
+                }
+                else {
+                    // Remove from both arrays
+                    container_array_remove_at(&delegate->listeners, index);
+                    container_array_remove_at(&delegate->callbacks, index);
 
-                // If no listeners remain, clean up the entire delegate
-                ByteSize remain = container_array_size(delegate->listeners);
-                if (remain == 0) {
-                    // Remove from active list
-                    container_array_remove(&state->active_delegates, (VoidPtr)&delegate, false);
+                    // If no listeners remain, clean up the entire delegate
+                    ByteSize remain = container_array_size(delegate->listeners);
+                    if (remain == 0) {
+                        // Remove from active list
+                        container_array_remove(&state->active_delegates, (VoidPtr)&delegate, false);
 
-                    // Remove from map
-                    container_map_remove(&state->delegate_map, id);
+                        // Remove from map
+                        container_map_remove(&state->delegate_map, id);
 
-                    // Destruct arrays of listeners and callbacks
-                    {
-                        if (container_array_destruct(&delegate->listeners) != CONTAINER_SUCCESS)
-                            return DELEGATE_MULTICAST_ERROR_FAILED_TO_DESTRUCT_DELEGATE_LISTENERS_ARRAY;
+                        // Destruct arrays of listeners and callbacks
+                        {
+                            if (container_array_destruct(&delegate->listeners) != CONTAINER_SUCCESS)
+                                return DELEGATE_MULTICAST_ERROR_FAILED_TO_DESTRUCT_DELEGATE_LISTENERS_ARRAY;
 
-                        if (container_array_destruct(&delegate->callbacks) != CONTAINER_SUCCESS)
-                            return DELEGATE_MULTICAST_ERROR_FAILED_TO_DESTRUCT_DELEGATE_CALLBACKS_ARRAY;
+                            if (container_array_destruct(&delegate->callbacks) != CONTAINER_SUCCESS)
+                                return DELEGATE_MULTICAST_ERROR_FAILED_TO_DESTRUCT_DELEGATE_CALLBACKS_ARRAY;
+                        }
+
+                        // Deallocate delegate
+                        if (memory_zone_deallocate("delegates", (VoidPtr)delegate, delegate->memory_size) != MEMORY_ZONE_SUCCESS)
+                            return DELEGATE_MULTICAST_ERROR_FAILED_TO_DEALLOCATE_MEMORY_OF_DELEGATE;
                     }
-
-                    // Deallocate delegate
-                    if (memory_zone_deallocate("delegates", (VoidPtr)delegate, delegate->memory_size) != MEMORY_ZONE_SUCCESS)
-                        return DELEGATE_MULTICAST_ERROR_FAILED_TO_DEALLOCATE_MEMORY_OF_DELEGATE;
                 }
 
                 // Return after first match is done
@@ -260,6 +267,10 @@ KYRA_ENGINE_API DelegateResult delegate_multicast_invoke(ConstStr id, const Send
     ContainerResult search_result = container_map_search(state->delegate_map, id, (VoidPtr)&delegate);
     if (search_result != CONTAINER_SUCCESS) return DELEGATE_MULTICAST_ERROR_FAILED_TO_LOCATE_DELEGATE_FOR_ID;
 
+    // Enter dispatch scope
+    delegate->invoke_depth++;
+
+    // Dispatched events
     ByteSize size = container_array_size(delegate->listeners);
     for (ByteSize index = 0; index < size; ++index) {
         // For every element...
@@ -270,6 +281,51 @@ KYRA_ENGINE_API DelegateResult delegate_multicast_invoke(ConstStr id, const Send
 
         // Invoke callback function
         if (callback) callback(sender, listener, data);
+    }
+
+    // Exit dispatched scope
+    delegate->invoke_depth--;
+
+    if (delegate->invoke_depth == 0) {
+        // All nested dispatches are done...
+
+        // Perform deferred cleanup pass
+        ByteSize current_size = container_array_size(delegate->listeners);
+        for (ByteSize index = current_size - 1; index >= 0; --index) {
+            DelegateFunction callback = *(DelegateFunction *)container_array_get_at(delegate->callbacks, index);
+            
+            // For every callback...
+
+            if (callback == NULL) {
+                // Flagged as NULL...
+                
+                // Remove it from both arrays
+                container_array_remove_at(&delegate->listeners, index);
+                container_array_remove_at(&delegate->callbacks, index);
+            }
+
+            // If the arrays are now empty, destroy the entire delegate
+            if (container_array_size(delegate->listeners) == 0) {
+                // Remove from active list
+                    container_array_remove(&state->active_delegates, (VoidPtr)&delegate, false);
+
+                    // Remove from map
+                    container_map_remove(&state->delegate_map, id);
+
+                    // Destruct arrays of listeners and callbacks
+                    {
+                        if (container_array_destruct(&delegate->listeners) != CONTAINER_SUCCESS)
+                            return DELEGATE_MULTICAST_ERROR_FAILED_TO_DESTRUCT_DELEGATE_LISTENERS_ARRAY;
+
+                        if (container_array_destruct(&delegate->callbacks) != CONTAINER_SUCCESS)
+                            return DELEGATE_MULTICAST_ERROR_FAILED_TO_DESTRUCT_DELEGATE_CALLBACKS_ARRAY;
+                    }
+
+                    // Deallocate delegate
+                    if (memory_zone_deallocate("delegates", (VoidPtr)delegate, delegate->memory_size) != MEMORY_ZONE_SUCCESS)
+                        return DELEGATE_MULTICAST_ERROR_FAILED_TO_DEALLOCATE_MEMORY_OF_DELEGATE;
+            }
+        }
     }
 
     return DELEGATE_SUCCESS;

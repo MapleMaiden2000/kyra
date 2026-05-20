@@ -87,6 +87,7 @@ typedef struct Unicast_Delegate {
 typedef struct Multicast_Delegate {
     Array                           listeners;  // <Listener>
     Array                           callbacks;  // <DelegateFunction>
+    Int32                           invoke_depth;
 
     // For allocations/deallocations
     ByteSize                        memory_size;

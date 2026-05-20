@@ -289,6 +289,21 @@ KYRA_ENGINE_API ContainerResult container_array_remove_at(Array *array, const By
     return CONTAINER_SUCCESS;
 }
 
+KYRA_ENGINE_API ContainerResult container_array_update_at(Array *array, const ByteSize index, const VoidPtr data) {
+    if (!array || !(*array)) return CONTAINER_ARRAY_ERROR_REF_ARRAY_NULL;
+    if (index > (*array)->size) return CONTAINER_ARRAY_ERROR_INDEX_OUT_OF_BOUNDS;
+
+    // Copy data to array
+    memcpy(
+        (VoidPtr)((UIntPtr)((*array)->data) + (index * (*array)->data_size)), 
+        data, 
+        (*array)->data_size
+    );
+
+    return CONTAINER_SUCCESS;
+}
+
+
 KYRA_ENGINE_API ContainerResult container_array_clear(Array *array) {
     if (!array || !(*array)) return CONTAINER_ARRAY_ERROR_REF_ARRAY_NULL;
 
