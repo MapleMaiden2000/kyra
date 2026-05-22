@@ -174,7 +174,7 @@ KYRA_ENGINE_API FilesystemResult platform_filesystem_read_all(File *file, ByteSi
 
     // Read all
     ByteSize bytes_read = fread(*out_read_buffer, sizeof(Char), file_size, file->stream);
-    if (bytes_read != file_size) return FILESYSTEM_ERROR_FAILED_TO_READ_ALL;
+    if (bytes_read != file_size && !feof(file->stream)) return FILESYSTEM_ERROR_FAILED_TO_READ_ALL;
 
     // Save to ref
     if (out_read_bytes) *out_read_bytes = bytes_read;
