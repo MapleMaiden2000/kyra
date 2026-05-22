@@ -253,6 +253,8 @@ KYRA_ENGINE_API ContainerResult container_string_destruct(String *string) {
 
     // Set string to NULL
     (*string) = NULL;
+
+    return CONTAINER_SUCCESS;
 }
 
 KYRA_ENGINE_API ContainerResult container_string_clear(String *string) {

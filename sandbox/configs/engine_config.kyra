@@ -4,11 +4,19 @@
         "version": "0.1.0"
     },
     
+    "log_system": {
+        "out_directory": "out/logs",
+        "loggers": [
+            { "id": "KYRA_ENGINE", "file": "engine.log", "flags": "ALL" }
+        ]
+    },
+
     "memory": {
         "zones": {
             "string": "4 MB",
             "containers": "12 MB",
-            "delegates": "1 MB"
+            "delegates": "1 MB",
+            "loggers": "128 KB"
         }
     }
 }

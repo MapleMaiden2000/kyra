@@ -126,7 +126,7 @@ KYRA_ENGINE_API ConsoleResult console_set_background(ConsoleColour colour) {
     return CONSOLE_SUCCESS;
 }
 
-KYRA_ENGINE_API ConsoleResult console_get_foreground_rgb(UInt8 r, UInt8 g, UInt8 b) {
+KYRA_ENGINE_API ConsoleResult console_set_foreground_rgb(UInt8 r, UInt8 g, UInt8 b) {
     if (!initialised) return CONSOLE_ERROR_NOT_INITIALISED;
 
     fprintf(stdout, "\x1b[38;2;%d;%d;%dm", r, g, b);
@@ -134,7 +134,7 @@ KYRA_ENGINE_API ConsoleResult console_get_foreground_rgb(UInt8 r, UInt8 g, UInt8
     return CONSOLE_SUCCESS;
 }
 
-KYRA_ENGINE_API ConsoleResult console_get_background_rgb(UInt8 r, UInt8 g, UInt8 b) {
+KYRA_ENGINE_API ConsoleResult console_set_background_rgb(UInt8 r, UInt8 g, UInt8 b) {
     if (!initialised) return CONSOLE_ERROR_NOT_INITIALISED;
 
     fprintf(stdout, "\x1b[48;2;%d;%d;%dm", r, g, b);

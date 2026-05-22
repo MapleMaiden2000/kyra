@@ -21,9 +21,9 @@ KYRA_ENGINE_API FilesystemResult    platform_filesystem_write_line(File *file, C
 KYRA_ENGINE_API FilesystemResult    platform_filesystem_write_data(File *file, const ByteSize bytes_to_write, const VoidPtr data);
 KYRA_ENGINE_API FilesystemResult    platform_filesystem_write_binary_uint32(File *file, UInt32 value);
 
-KYRA_ENGINE_API FilesystemResult    platform_filesystem_extract_filename(ConstStr path, const ByteSize capacity, Str *out_filename);
-KYRA_ENGINE_API FilesystemResult    platform_filesystem_extract_extension(ConstStr path, const ByteSize capacity, Str *out_extension);
-KYRA_ENGINE_API FilesystemResult    platform_filesystem_extract_directory(ConstStr path, const ByteSize capacity, Str *out_directory);
+KYRA_ENGINE_API FilesystemResult    platform_filesystem_extract_filename(ConstStr path, const ByteSize capacity, Str out_filename);
+KYRA_ENGINE_API FilesystemResult    platform_filesystem_extract_extension(ConstStr path, const ByteSize capacity, Str out_extension);
+KYRA_ENGINE_API FilesystemResult    platform_filesystem_extract_directory(ConstStr path, const ByteSize capacity, Str out_directory);
 
 KYRA_ENGINE_API FilesystemResult    platform_filesystem_seek_to_position(File *file, const Int64 position);
 KYRA_ENGINE_API FilesystemResult    platform_filesystem_seek_from_current(File *file, const Int64 delta);

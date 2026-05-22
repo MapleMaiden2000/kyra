@@ -186,8 +186,8 @@ KYRA_ENGINE_API DelegateResult delegate_multicast_register(ConstStr id, const Li
 
     // Add listener and callback to delegate
     {
-        container_array_push(&delegate->listeners, &listener);
-        container_array_push(&delegate->callbacks, &callback);
+        container_array_push(&delegate->listeners, (VoidPtr)&listener);
+        container_array_push(&delegate->callbacks, (VoidPtr)&callback);
     }
 
     return DELEGATE_SUCCESS;

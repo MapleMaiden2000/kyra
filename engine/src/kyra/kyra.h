@@ -17,6 +17,7 @@
 #include "kyra/defines/core/clock.h"
 #include "kyra/defines/core/hash.h"
 #include "kyra/defines/core/delegates.h"
+#include "kyra/defines/core/logger.h"
 
 // Core engine systems
 #include "kyra/core/platform/filesystem/filesystem.h"
@@ -31,6 +32,7 @@
 #include "kyra/core/hash/hash.h"
 #include "kyra/core/delegates/unicast/unicast.h"
 #include "kyra/core/delegates/multicast/multicast.h"
+#include "kyra/core/logger/logger.h"
 #include "kyra/core/engine/engine.h"
 
 // Application and Entry point

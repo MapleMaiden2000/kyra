@@ -17,8 +17,8 @@ KYRA_ENGINE_API ConsoleResult   console_set_title(ConstStr title);
 
 KYRA_ENGINE_API ConsoleResult   console_set_foreground(ConsoleColour colour);
 KYRA_ENGINE_API ConsoleResult   console_set_background(ConsoleColour colour);
-KYRA_ENGINE_API ConsoleResult   console_get_foreground_rgb(UInt8 r, UInt8 g, UInt8 b);
-KYRA_ENGINE_API ConsoleResult   console_get_background_rgb(UInt8 r, UInt8 g, UInt8 b);
+KYRA_ENGINE_API ConsoleResult   console_set_foreground_rgb(UInt8 r, UInt8 g, UInt8 b);
+KYRA_ENGINE_API ConsoleResult   console_set_background_rgb(UInt8 r, UInt8 g, UInt8 b);
 
 
 // -- Output -- //

@@ -283,10 +283,10 @@ KYRA_ENGINE_API FilesystemResult platform_filesystem_write_binary_uint32(File *f
     return FILESYSTEM_SUCCESS;
 }
 
-KYRA_ENGINE_API FilesystemResult platform_filesystem_extract_filename(ConstStr path, const ByteSize capacity, Str *out_filename) {
+KYRA_ENGINE_API FilesystemResult platform_filesystem_extract_filename(ConstStr path, const ByteSize capacity, Str out_filename) {
     if (!path) return FILESYSTEM_ERROR_FILEPATH_NULL;
     if (capacity == 0) return FILESYSTEM_ERROR_CAPACITY_ZERO;
-    if (!*out_filename) return FILESYSTEM_ERROR_REF_OUT_FILENAME_NULL;
+    if (!out_filename) return FILESYSTEM_ERROR_REF_OUT_FILENAME_NULL;
     
     // Locate the start of the filename
     ConstStr last_bwd = strrchr(path, '\\');    // Very last backward slash in the path
@@ -308,15 +308,15 @@ KYRA_ENGINE_API FilesystemResult platform_filesystem_extract_filename(ConstStr p
     if (length >= capacity) return FILESYSTEM_ERROR_CAPACITY_INSUFFICIENT_TO_EXTRACT;
 
     // Save to ref
-    snprintf(*out_filename, capacity, "%.*s", length, start); 
+    snprintf(out_filename, capacity, "%.*s", length, start); 
 
     return FILESYSTEM_SUCCESS;
 }
 
-KYRA_ENGINE_API FilesystemResult platform_filesystem_extract_extension(ConstStr path, const ByteSize capacity, Str *out_extension) {
+KYRA_ENGINE_API FilesystemResult platform_filesystem_extract_extension(ConstStr path, const ByteSize capacity, Str out_extension) {
     if (!path) return FILESYSTEM_ERROR_FILEPATH_NULL;
     if (capacity == 0) return FILESYSTEM_ERROR_CAPACITY_ZERO;
-    if (!*out_extension) return FILESYSTEM_ERROR_REF_OUT_EXTENSION_NULL;
+    if (!out_extension) return FILESYSTEM_ERROR_REF_OUT_EXTENSION_NULL;
 
     // Locate the last occurring directory separator
     ConstStr last_bwd = strrchr(path, '\\');    // Very last backward slash in the path
@@ -335,15 +335,15 @@ KYRA_ENGINE_API FilesystemResult platform_filesystem_extract_extension(ConstStr 
     if (length >= capacity) return FILESYSTEM_ERROR_CAPACITY_INSUFFICIENT_TO_EXTRACT;
 
     // Save to ref
-    snprintf(*out_extension, capacity, "%.*s", length, ext);
+    snprintf(out_extension, capacity, "%.*s", length, ext);
 
     return FILESYSTEM_SUCCESS;
 }
 
-KYRA_ENGINE_API FilesystemResult platform_filesystem_extract_directory(ConstStr path, const ByteSize capacity, Str *out_directory) {
+KYRA_ENGINE_API FilesystemResult platform_filesystem_extract_directory(ConstStr path, const ByteSize capacity, Str out_directory) {
     if (!path) return FILESYSTEM_ERROR_FILEPATH_NULL;
     if (capacity == 0) return FILESYSTEM_ERROR_CAPACITY_ZERO;
-    if (!*out_directory) return FILESYSTEM_ERROR_REF_OUT_DIRECTORY_NULL;
+    if (!out_directory) return FILESYSTEM_ERROR_REF_OUT_DIRECTORY_NULL;
 
     // Locate the last occurring directory separator
     ConstStr last_bwd = strrchr(path, '\\');    // Very last backward slash in the path
@@ -354,7 +354,7 @@ KYRA_ENGINE_API FilesystemResult platform_filesystem_extract_directory(ConstStr 
     if (!last_sep) {
         // Save as '.' which means 'current directory'
         if (capacity < 2) return FILESYSTEM_ERROR_CAPACITY_INSUFFICIENT_TO_EXTRACT;
-        snprintf(*out_directory, capacity, ".");
+        snprintf(out_directory, capacity, ".");
 
         return FILESYSTEM_SUCCESS;
     }
@@ -367,7 +367,7 @@ KYRA_ENGINE_API FilesystemResult platform_filesystem_extract_directory(ConstStr 
     if (length >= capacity) return FILESYSTEM_ERROR_CAPACITY_INSUFFICIENT_TO_EXTRACT;
 
     // Save to ref
-    snprintf(*out_directory, capacity, "%.*s", length, path);
+    snprintf(out_directory, capacity, "%.*s", length, path);
 
     return FILESYSTEM_SUCCESS;
 }
