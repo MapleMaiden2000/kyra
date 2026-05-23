@@ -14,12 +14,19 @@ set PREMAKE_ZIP=%PREMAKE_DIR%\premake.zip
 set CJSON_BASE_URL=https://raw.githubusercontent.com/DaveGamble/cJSON/master
 set CJSON_DIR=external\cjson
 
+:: GLFW config
+set GLFW_VERSION=3.4
+set GLFW_URL=https://github.com/glfw/glfw/releases/download/%GLFW_VERSION%/glfw-%GLFW_VERSION%.bin.WIN64.zip
+set GLFW_DIR=external\glfw
+set GLFW_ZIP=%GLFW_DIR%\glfw.zip
+
 echo ==== Kyra Engine Bootstrap ====
 
 :: Ensure full directory structure
 if not exist external mkdir external
 if not exist %PREMAKE_DIR% mkdir %PREMAKE_DIR%
 if not exist %CJSON_DIR% mkdir %CJSON_DIR%
+if not exist %GLFW_DIR% mkdir %GLFW_DIR%
 
 :: Download and extract Premake
 if not exist %PREMAKE_DIR%\premake5.exe (
@@ -52,6 +59,7 @@ if not exist %CJSON_DIR%\cJSON.c (
     set CJSON_FILES=cJSON.c cJSON.h README.md LICENSE
     for %%f in (!CJSON_FILES!) do (
         echo [Bootstrap-Info] Downloading %%f...
+        
         powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri %CJSON_BASE_URL%/%%f -OutFile %CJSON_DIR%\%%f"
         if !ERRORLEVEL! neq 0 (
             echo [Bootstrap-Error] Failed to download %%f.
@@ -62,6 +70,34 @@ if not exist %CJSON_DIR%\cJSON.c (
     echo [Bootstrap-Info] cJSON installed successfully.
 ) else (
     echo [Bootstrap-Info] cJSON found.
+)
+
+:: Download and extract GLFW
+if not exist %GLFW_DIR%\include\GLFW\glfw3.h (
+    echo [Bootstrap-Info] GLFW not found. Downloading GLFW ^(v%GLFW_VERSION%^)...
+    
+    powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri %GLFW_URL% -OutFile %GLFW_ZIP%"
+    if %ERRORLEVEL% neq 0 (
+        echo [Bootstrap-Error] Failed to download GLFW.
+        exit /b 1
+    )
+    
+    echo [Bootstrap-Info] Extracting GLFW...
+    powershell -Command "Expand-Archive -Path %GLFW_ZIP% -DestinationPath %GLFW_DIR% -Force"
+    if %ERRORLEVEL% neq 0 (
+        echo [Bootstrap-Error] Failed to extract GLFW.
+        exit /b 1
+    )
+    
+    echo [Bootstrap-Info] Re-organising GLFW files...
+    :: Move files from the nested directory up to the root GLFW_DIR
+    powershell -Command "Move-Item -Path %GLFW_DIR%\glfw-%GLFW_VERSION%.bin.WIN64\* -Destination %GLFW_DIR% -Force"
+    powershell -Command "Remove-Item -Path %GLFW_DIR%\glfw-%GLFW_VERSION%.bin.WIN64 -Recurse -Force"
+    
+    del %GLFW_ZIP%
+    echo [Bootstrap-Info] GLFW installed successfully.
+) else (
+    echo [Bootstrap-Info] GLFW found.
 )
 
 :: Report result

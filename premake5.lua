@@ -51,7 +51,19 @@ project "engine"
 
     includedirs {
         "engine/src",
-        "external/cjson"
+        "external/cjson",
+        "external/glfw/include"
+    }
+
+    libdirs {
+        "external/glfw/lib-mingw-w64"
+    }
+
+    links {
+        "glfw3",
+        "gdi32",
+        "opengl32",
+        "shell32"
     }
 
 
