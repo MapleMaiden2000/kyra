@@ -33,6 +33,7 @@
 #include "kyra/core/delegates/unicast/unicast.h"
 #include "kyra/core/delegates/multicast/multicast.h"
 #include "kyra/core/logger/logger.h"
+#include "kyra/core/platform/window/window.h"
 #include "kyra/core/engine/engine.h"
 
 // Application and Entry point

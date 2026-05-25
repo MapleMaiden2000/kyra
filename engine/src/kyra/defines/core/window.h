@@ -8,6 +8,16 @@
 typedef enum Window_Result {
     WINDOW_SUCCESS                                                              = 0,
 
+
+    // -- Window interface -- //
+
+    WINDOW_ERROR_ALREADY_INITIALISED                                            = -1,
+    WINDOW_ERROR_NOT_INITIALISED                                                = -2,
+    WINDOW_ERROR_INVALID_BACKEND_OPTION                                         = -3,
+
+
+    // -- Window backend (GLFW) -- //
+
     WINDOW_BACKEND_GLFW_ERROR_REF_OUT_WINDOW_NULL                               = -100,
     WINDOW_BACKEND_GLFW_ERROR_WINDOW_NULL                                       = -101,
     WINDOW_BACKEND_GLFW_ERROR_FAILED_TO_INITIALISE                              = -102,
