@@ -19,7 +19,7 @@ if not exist %PREMAKE_EXE% (
 
 :: Create output directories
 echo [Generate-Info] Creating output directories...
-powershell -Command "New-Item -ItemType Directory -Path out/bin/Debug, out/bin/Release, out/int/Debug/engine, out/int/Release/engine, out/int/Debug/sandbox, out/int/Release/sandbox -Force | Out-Null"
+powershell -Command "New-Item -ItemType Directory -Path out/bin/Debug, out/bin/Release, out/int/Debug/engine, out/int/Release/engine, out/int/Debug/editor, out/int/Release/editor, out/int/Debug/editor_app, out/int/Release/editor_app, out/int/Debug/sandbox, out/int/Release/sandbox -Force | Out-Null"
 
 :: Run Premake (gmake2)
 %PREMAKE_EXE% gmake2

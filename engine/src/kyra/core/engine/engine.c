@@ -20,6 +20,8 @@
 typedef struct Engine_State {
     EngineConfig    engine_config;
     MemoryConfig    memory_config;
+
+    Bool            running;
 } EngineState;
 
 static EngineState *state = NULL;
@@ -253,6 +255,9 @@ KYRA_ENGINE_API EngineResult engine_preconstruct(ConstStr config_filepath) {
         return engine_destruct();
     }
 
+    // Set engine as running
+    state->running = true;
+
     KYRA_PRINT_INFO("Engine preconstructed.");
 
     return ENGINE_SUCCESS;
@@ -327,6 +332,21 @@ KYRA_ENGINE_API EngineResult engine_destruct(void) {
     console_shutdown();
 
     return ENGINE_SUCCESS;
+}
+
+KYRA_ENGINE_API EngineResult engine_request_shutdown(void) {
+    if (!state) return ENGINE_DESTRUCT_ERROR_STATE_NOT_INITIALISED;
+
+    // Flag engine to exit loop
+    state->running = false;
+
+    return ENGINE_SUCCESS;
+}
+
+KYRA_ENGINE_API Bool engine_is_running(void) {
+    if (!state) return false;
+
+    return state->running;
 }
 
 KYRA_ENGINE_API ConstStr engine_result_to_string(const EngineResult result) {

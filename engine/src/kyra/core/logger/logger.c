@@ -275,18 +275,18 @@ KYRA_ENGINE_API LoggerResult logger_shutdown(void) {
     ByteSize count = container_map_size(state->logger_map);
     for (ByteSize index = 0; index < count; ++index) {
         String key;
-        Logger *handle = NULL;
+        Logger handle;
 
-        if (container_map_at_index(state->logger_map, index, &key, (VoidPtr)handle) == CONTAINER_SUCCESS) {
+        if (container_map_at_index(state->logger_map, index, &key, (VoidPtr)&handle) == CONTAINER_SUCCESS) {
             // For every found logger handle...
 
             // Destroy 'id' string
-            if (container_string_destruct(&handle->id) != CONTAINER_SUCCESS)
+            if (container_string_destruct(&handle.id) != CONTAINER_SUCCESS)
                 return LOGGER_ERROR_FAILED_TO_DESTRUCT_ID_STRING_FOR_LOGGER;
 
             // Close output log file
-            if (handle->has_file) {
-                if (platform_filesystem_file_close(&handle->file) != FILESYSTEM_SUCCESS)
+            if (handle.has_file) {
+                if (platform_filesystem_file_close(&handle.file) != FILESYSTEM_SUCCESS)
                     return LOGGER_ERROR_FAILED_TO_CLOSE_OUTPUT_LOG_FILE_FOR_LOGGER;
             }
         }
@@ -370,17 +370,17 @@ KYRA_ENGINE_API LoggerResult logger_unregister(ConstStr id) {
     if (!state) return LOGGER_ERROR_NOT_INITIALISED;
 
     // Search for logger handle
-    Logger *handle = NULL;
-    if (container_map_search(state->logger_map, id, (VoidPtr)handle) == CONTAINER_SUCCESS) {
+    Logger handle;
+    if (container_map_search(state->logger_map, id, (VoidPtr)&handle) == CONTAINER_SUCCESS) {
         // Found logger with matching 'id'...
 
         // Destroy 'id' string
-        if (container_string_destruct(&handle->id) != CONTAINER_SUCCESS)
+        if (container_string_destruct(&handle.id) != CONTAINER_SUCCESS)
             return LOGGER_ERROR_FAILED_TO_DESTRUCT_ID_STRING_FOR_LOGGER;
 
         // Close output log file
-        if (handle->has_file) {
-            if (platform_filesystem_file_close(&handle->file) != FILESYSTEM_SUCCESS)
+        if (handle.has_file) {
+            if (platform_filesystem_file_close(&handle.file) != FILESYSTEM_SUCCESS)
                 return LOGGER_ERROR_FAILED_TO_CLOSE_OUTPUT_LOG_FILE_FOR_LOGGER;
         }
 
@@ -391,7 +391,7 @@ KYRA_ENGINE_API LoggerResult logger_unregister(ConstStr id) {
         return LOGGER_SUCCESS;
     }
 
-    return LOGGER_ERROR_FAILED_TO_UNREGISTER_LOGGER;
+    return CONTAINER_MAP_ERROR_FAILED_TO_LOCATE_SLOT_FOR_KEY;
 }
 
 KYRA_ENGINE_API LoggerResult logger_update(ConstStr id, ConstStr new_filename, const LoggerFlags new_flags) {
@@ -437,7 +437,6 @@ KYRA_ENGINE_API LoggerResult logger_print(
     ConstStr            id,
 
     LoggerVerbosity     verbosity,
-    LoggerFlags         flags,
 
     ConstStr            at_file,
     UInt32              at_line,

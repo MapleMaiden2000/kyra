@@ -67,6 +67,54 @@ project "engine"
     }
 
 
+-- Editor Project Configuration --
+
+project "editor"
+    kind "SharedLib"
+    targetname "kyra_editor"
+    staticruntime "on"
+
+    defines { "KYRA_EDITOR_EXPORT" }
+
+    files {
+        "editor/src/**.h",
+        "editor/src/**.c",
+        "external/cjson/cJSON.c",
+        "external/cjson/cJSON.h"
+    }
+
+    removefiles { "editor/src/kyra_editor/main.c" }
+
+    includedirs {
+        "engine/src",
+        "editor/src",
+        "external/cjson",
+        "external/glfw/include"
+    }
+
+    links { "engine" }
+
+
+-- Editor Application Project Configuration --
+
+project "editor_app"
+    kind "ConsoleApp"
+    staticruntime "on"
+
+    files { "editor/src/kyra_editor/main.c" }
+
+    includedirs {
+        "engine/src",
+        "editor/src",
+        "external/cjson"
+    }
+
+    links {
+        "engine",
+        "editor"
+    }
+
+
 -- Sandbox Project Configuration --
 
 project "sandbox"
@@ -80,7 +128,12 @@ project "sandbox"
 
     includedirs {
         "engine/src",
+        "editor/src",
         "sandbox/src",
+        "external/cjson"
     }
 
-    links { "engine" }
+    links { 
+        "engine",
+        "editor"  
+    }

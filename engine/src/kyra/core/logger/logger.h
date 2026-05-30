@@ -18,7 +18,6 @@ KYRA_ENGINE_API LoggerResult    logger_print(
     ConstStr            id,
 
     LoggerVerbosity     verbosity,
-    LoggerFlags         flags,
 
     ConstStr            at_file,
     UInt32              at_line,
@@ -34,7 +33,7 @@ KYRA_ENGINE_API ConstStr        logger_result_to_string(const LoggerResult resul
 // Logging macros -------------------------------------------------- //
 
 #define KYRA_LOG_PRINT(id, verbosity, ...) \
-    logger_print(id, verbosity, LOGGER_FLAG_ALL, __FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
+    logger_print(id, verbosity, __FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
 
 #define KYRA_LOG_ENGINE_TRACE(...)  KYRA_LOG_PRINT("KYRA_ENGINE", LOGGER_VERBOSITY_TRACE,   __VA_ARGS__)
 #define KYRA_LOG_ENGINE_DEBUG(...)  KYRA_LOG_PRINT("KYRA_ENGINE", LOGGER_VERBOSITY_DEBUG,   __VA_ARGS__)
@@ -42,5 +41,12 @@ KYRA_ENGINE_API ConstStr        logger_result_to_string(const LoggerResult resul
 #define KYRA_LOG_ENGINE_WARN(...)   KYRA_LOG_PRINT("KYRA_ENGINE", LOGGER_VERBOSITY_WARNING, __VA_ARGS__)
 #define KYRA_LOG_ENGINE_ERROR(...)  KYRA_LOG_PRINT("KYRA_ENGINE", LOGGER_VERBOSITY_ERROR,   __VA_ARGS__)
 #define KYRA_LOG_ENGINE_FATAL(...)  KYRA_LOG_PRINT("KYRA_ENGINE", LOGGER_VERBOSITY_FATAL,   __VA_ARGS__)
+
+#define KYRA_LOG_EDITOR_TRACE(...)  KYRA_LOG_PRINT("KYRA_EDITOR", LOGGER_VERBOSITY_TRACE,   __VA_ARGS__)
+#define KYRA_LOG_EDITOR_DEBUG(...)  KYRA_LOG_PRINT("KYRA_EDITOR", LOGGER_VERBOSITY_DEBUG,   __VA_ARGS__)
+#define KYRA_LOG_EDITOR_INFO(...)   KYRA_LOG_PRINT("KYRA_EDITOR", LOGGER_VERBOSITY_INFO,    __VA_ARGS__)
+#define KYRA_LOG_EDITOR_WARN(...)   KYRA_LOG_PRINT("KYRA_EDITOR", LOGGER_VERBOSITY_WARNING, __VA_ARGS__)
+#define KYRA_LOG_EDITOR_ERROR(...)  KYRA_LOG_PRINT("KYRA_EDITOR", LOGGER_VERBOSITY_ERROR,   __VA_ARGS__)
+#define KYRA_LOG_EDITOR_FATAL(...)  KYRA_LOG_PRINT("KYRA_EDITOR", LOGGER_VERBOSITY_FATAL,   __VA_ARGS__)
 
 

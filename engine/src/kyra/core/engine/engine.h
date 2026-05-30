@@ -49,5 +49,9 @@ KYRA_ENGINE_API EngineResult    engine_construct(void);
 KYRA_ENGINE_API EngineResult    engine_update(Flt32 delta_time);
 KYRA_ENGINE_API EngineResult    engine_destruct(void);
 
+KYRA_ENGINE_API EngineResult    engine_request_shutdown(void);
+
+KYRA_ENGINE_API Bool            engine_is_running(void);
+
 KYRA_ENGINE_API ConstStr        engine_result_to_string(const EngineResult result);
 

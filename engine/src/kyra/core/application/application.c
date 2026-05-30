@@ -8,12 +8,13 @@
 
 #include "kyra/core/platform/filesystem/filesystem.h"
 #include "kyra/core/misc/console/console.h"
+#include "kyra/core/containers/string/string.h"
 
 
 // API functions -------------------------------------------------------- //
 
-KYRA_ENGINE_API ApplicationResult application_configure(ConstStr config_filepath, ApplicationConfig *out_config) {
-    if (!out_config) return APPLICATION_ERROR_REF_OUT_CONFIG_NULL;
+KYRA_ENGINE_API ApplicationResult application_configure(ConstStr config_filepath, Application *out_app) {
+    if (!out_app) return APPLICATION_ERROR_REF_OUT_APPLICATION_NULL;
 
     FilesystemResult fs_result = 0; 
 
@@ -85,12 +86,38 @@ KYRA_ENGINE_API ApplicationResult application_configure(ConstStr config_filepath
     if (sect_info) {
         // Application name
         cJSON *sect_info_name = cJSON_GetObjectItemCaseSensitive(sect_info, "name");
-        if (cJSON_IsString(sect_info_name)) out_config->name = _strdup(sect_info_name->valuestring);
+        if (cJSON_IsString(sect_info_name)) {
+            if (container_string_construct(sect_info_name->valuestring, &out_app->name) != CONTAINER_SUCCESS)
+                return APPLICATION_ERROR_FAILED_TO_CONSTRUCT_APPLICATION_NAME_STRING;
+        }
     }
 
-    KYRA_PRINT_INFO("Application name: %s", out_config->name);
+    return APPLICATION_SUCCESS;
+}
+
+KYRA_ENGINE_API ApplicationResult application_request_shutdown(Application *app) {
+    // Request application shutdown
+    if (!app) return APPLICATION_ERROR_REF_APPLICATION_NULL;
+
+    app->is_running = false;
 
     return APPLICATION_SUCCESS;
+}
+
+KYRA_ENGINE_API ConstStr application_result_to_string(const ApplicationResult result) {
+    switch (result) {
+        case APPLICATION_SUCCESS:                                               return "APPLICATION_SUCCESS";
+
+        case APPLICATION_ERROR_REF_OUT_APPLICATION_NULL:                        return "APPLICATION_ERROR_REF_OUT_APPLICATION_NULL"; 
+        case APPLICATION_ERROR_REF_APPLICATION_NULL:                            return "APPLICATION_ERROR_REF_APPLICATION_NULL"; 
+        case APPLICATION_ERROR_FAILED_TO_OPEN_CONFIG_FILE:                      return "APPLICATION_ERROR_FAILED_TO_OPEN_CONFIG_FILE"; 
+        case APPLICATION_ERROR_FAILED_TO_GET_FILE_SIZE:                         return "APPLICATION_ERROR_FAILED_TO_GET_FILE_SIZE"; 
+        case APPLICATION_ERROR_FAILED_TO_CLOSE_CONFIG_FILE:                     return "APPLICATION_ERROR_FAILED_TO_CLOSE_CONFIG_FILE"; 
+        case APPLICATION_ERROR_FAILED_TO_PARSE_TO_JSON:                         return "APPLICATION_ERROR_FAILED_TO_PARSE_TO_JSON"; 
+        case APPLICATION_ERROR_FAILED_TO_CONSTRUCT_APPLICATION_NAME_STRING:     return "APPLICATION_ERROR_FAILED_TO_CONSTRUCT_APPLICATION_NAME_STRING"; 
+    
+        default:                                                                return "UNKNOWN_APPLICATION_RESULT";
+    }
 }
 
 

@@ -85,8 +85,8 @@ WindowResult backend_glfw_construct_window(const WindowConfigs configs, const Wi
 
     // Set properties
     {
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);  // v[3].4
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);  // v3.[4]
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);  // v[3].3
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);  // v3.[3]
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);       // Hidden until setup is done
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);      // Make resizable
         glfwWindowHint(GLFW_FOCUS_ON_SHOW, GLFW_TRUE);  // Make focused upon showed

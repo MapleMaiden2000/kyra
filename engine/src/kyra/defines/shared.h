@@ -1,6 +1,7 @@
 #pragma once
 
-// Platform detection --------------------------------------------------- //
+
+// Platform detection ---------------------------------------------- //
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
     // Windows
@@ -26,7 +27,7 @@
 #endif
 
 
-// DLL export/import ---------------------------------------------------- //
+// DLL export/import ----------------------------------------------- //
 
 #ifdef KYRA_EXPORT
     // We are building the engine, so we export
@@ -45,7 +46,7 @@
 #endif
 
 
-// Compiler specifics --------------------------------------------------- //
+// Compiler specifics ---------------------------------------------- //
 
 #if defined(__GNUC__) || defined(__clang__)
     // GCC and Clang

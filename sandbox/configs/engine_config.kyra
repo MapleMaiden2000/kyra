@@ -7,7 +7,8 @@
     "log_system": {
         "out_directory": "out/logs",
         "loggers": [
-            { "id": "KYRA_ENGINE", "file": "engine.log", "flags": "ALL" }
+            { "id": "KYRA_ENGINE", "file": "engine.log", "flags": "ALL" },
+            { "id": "KYRA_EDITOR", "file": "editor.log", "flags": "ALL" }
         ]
     },
 
@@ -16,7 +17,9 @@
             "string": "4 MB",
             "containers": "12 MB",
             "delegates": "1 MB",
-            "loggers": "128 KB"
+            "loggers": "128 KB",
+            "platform": "512 KB",
+            "editor": "128 KB"
         }
     }
 }

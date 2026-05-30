@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 
-Int32 main(Int32 argc, Int32 argv) {
+Int32 main(Int32 argc, Str *argv) {
     EngineResult engine_result;
     
     // Engine startup
@@ -23,9 +23,7 @@ Int32 main(Int32 argc, Int32 argv) {
 
     // Application
     {
-        ConstStr app_config_filepath = "sandbox/configs/app_config.kyra";
-
-        Application *app = application_create(app_config_filepath);
+        Application *app = application_create();
         if (!app) {
             // If failed to create app, shutdown the engine            
             engine_result = engine_destruct();
@@ -34,24 +32,38 @@ Int32 main(Int32 argc, Int32 argv) {
             return -1;
         }
 
-        // Startup stage
+        // Pass CLI arguments to the application
+        app->argc = argc;
+        app->argv = argv;
+        app->is_running = true;
+
+        // Application startup
         if (app->on_startup) app->on_startup(app);
 
         // Main loop
         {
-            // Update engine
-            engine_update(0.0f);
+            HiResClock clock;
+            clock_hires_split(&clock);
 
-            // Update stage
-            if (app->on_update) app->on_update(app, 0.0f);
+            while (app->is_running && engine_is_running()) {
+                Flt64 elapsed = 0.0;
+                clock_hires_elapsed_seconds(clock, &elapsed);
+
+                // Reset for next frame
+                clock_hires_split(&clock);
+
+                // Update stage
+                if (app->on_update) app->on_update(app, (Flt32)elapsed);
+            }
         }
 
         // Shutdown stage
         if (app->on_shutdown) app->on_shutdown(app);
 
-        // Deallocate application configuration properties
+        // Deallocate application properties
         {
-            free(app->config.name);
+            // Application name
+            container_string_destruct(&app->name);
         }
     }
 

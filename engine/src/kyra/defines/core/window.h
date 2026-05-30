@@ -28,7 +28,15 @@ typedef enum Window_Result {
 } WindowResult;
 
 typedef enum Window_Module_Result {
-    WINDOW_MODULE_SUCCESS                               = 0,
+    WINDOW_MODULE_SUCCESS                                                       = 0,
+
+    WINDOW_MODULE_ERROR_NOT_INITIALISED                                         = -1,
+    WINDOW_MODULE_ERROR_ALREADY_INITIALISED                                     = -2,
+    WINDOW_MODULE_ERROR_PLATFORM_WINDOW_STARTUP_FAILED                          = -3,
+    WINDOW_MODULE_ERROR_PLATFORM_WINDOW_SHUTDOWN_FAILED                         = -4,
+    WINDOW_MODULE_ERROR_FAILED_TO_POLL_EVENTS                                   = -5,
+    WINDOW_MODULE_ERROR_FAILED_TO_CONSTRUCT_WINDOW                              = -6,
+    WINDOW_MODULE_ERROR_FAILED_TO_DESTRUCT_WINDOW                               = -7,
 
 } WindowModuleResult;
 
