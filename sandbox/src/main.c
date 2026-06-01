@@ -63,12 +63,21 @@ static void on_update(Application *app, float delta_time) {
         
         // Request shutdown if editor requested to close
         if (editor_should_close()) application_request_shutdown(app);
+
+        if (input_module_is_key_just_pressed(KYRA_KEYCODE_ESCAPE)) {
+            KYRA_LOG_PRINT("SANDBOX", LOGGER_VERBOSITY_INFO, "ESCAPE pressed. Closing application...");
+
+            // Request app shutdown
+            application_request_shutdown(app);
+        }
     } else {
-        // Headless Mode sustained loop logic
+        // No editor... 
+        // Running in headless mode...
+
         static Bool logged = false;
         
         if (!logged) {
-            KYRA_LOG_PRINT("SANDBOX", LOGGER_VERBOSITY_INFO, "Headless loop active. Delta: %.4f", delta_time);
+            KYRA_LOG_PRINT("SANDBOX", LOGGER_VERBOSITY_INFO, "Running in headless mode...");
             logged = true;
         }
     }

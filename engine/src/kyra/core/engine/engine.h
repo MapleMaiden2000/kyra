@@ -27,6 +27,7 @@ typedef enum Engine_Result {
     
     // Update
     ENGINE_UPDATE_ERROR_STATE_NOT_INITIALISED               = -300,
+    ENGINE_UPDATE_ERROR_INPUT_MODULE_UPDATE_FAILED          = -301,
     
     // Destruct
     ENGINE_DESTRUCT_ERROR_STATE_NOT_INITIALISED             = -400,

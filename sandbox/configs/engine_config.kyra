@@ -19,6 +19,7 @@
             "delegates": "1 MB",
             "loggers": "128 KB",
             "platform": "512 KB",
+            "input": "64 KB",
             "editor": "128 KB"
         }
     }

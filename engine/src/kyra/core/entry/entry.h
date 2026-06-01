@@ -52,12 +52,18 @@ Int32 main(Int32 argc, Str *argv) {
                 // Reset for next frame
                 clock_hires_split(&clock);
 
-                // Update stage
+                // Update engine
+                {
+                    engine_result = engine_update((Flt32)elapsed);
+                    if (engine_result != ENGINE_SUCCESS) return (Int32)engine_result;
+                }
+
+                // Application update
                 if (app->on_update) app->on_update(app, (Flt32)elapsed);
             }
         }
 
-        // Shutdown stage
+        // Application shutdown
         if (app->on_shutdown) app->on_shutdown(app);
 
         // Deallocate application properties

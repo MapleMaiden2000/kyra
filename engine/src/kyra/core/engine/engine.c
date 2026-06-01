@@ -13,6 +13,7 @@
 #include "kyra/core/delegates/unicast/unicast.h"
 #include "kyra/core/delegates/multicast/multicast.h"
 #include "kyra/core/logger/logger.h"
+#include "kyra/core/modules/input/input_module.h"
 
 
 // Engine state --------------------------------------------------------- //
@@ -246,6 +247,15 @@ KYRA_ENGINE_API EngineResult engine_preconstruct(ConstStr config_filepath) {
         }
     }
 
+    // Input module startup
+    InputModuleResult input_module_result = input_module_startup(); 
+    if (input_module_result != INPUT_MODULE_SUCCESS) {
+        KYRA_PRINT_ERROR("Input module startup failed (Error: %s).", input_module_result_to_string(input_module_result));
+
+        // Call for engine destruction
+        return engine_destruct();
+    }
+
     // Logger
     LoggerResult logger_result = logger_startup(config_filepath);
     if (logger_result != LOGGER_SUCCESS) {
@@ -275,8 +285,10 @@ KYRA_ENGINE_API EngineResult engine_construct(void) {
 
 KYRA_ENGINE_API EngineResult engine_update(Flt32 delta_time) {
     if (!state) return ENGINE_UPDATE_ERROR_STATE_NOT_INITIALISED;
-    
-    KYRA_PRINT_INFO("Updating engine...");
+
+    // Update input module state
+    if (input_module_update() != INPUT_MODULE_SUCCESS)
+        return ENGINE_UPDATE_ERROR_INPUT_MODULE_UPDATE_FAILED;
 
     return ENGINE_SUCCESS;
 }
@@ -286,12 +298,17 @@ KYRA_ENGINE_API EngineResult engine_destruct(void) {
 
     KYRA_PRINT_INFO("Destructing engine...");
     
-    // Logger
+    // Logger shutdown
     LoggerResult logger_result = logger_shutdown();
     if (logger_result != LOGGER_SUCCESS)
         KYRA_PRINT_ERROR("Logger shutdown failed (Error: %s).", logger_result_to_string(logger_result));
 
-    // Delegate systems startup
+    // Input module shutdown
+    InputModuleResult input_module_result = input_module_shutdown();
+    if (input_module_result != INPUT_MODULE_SUCCESS)
+        KYRA_PRINT_ERROR("Input module shutdown failed (Error: %s).", input_module_result_to_string(input_module_result));
+
+    // Delegate systems shutdown
     {
         // Uni-cast
         DelegateResult unicast_result = delegate_unicast_shutdown(); 
@@ -370,6 +387,7 @@ KYRA_ENGINE_API ConstStr engine_result_to_string(const EngineResult result) {
         
         // Update
         case ENGINE_UPDATE_ERROR_STATE_NOT_INITIALISED:                 return "ENGINE_UPDATE_ERROR_STATE_NOT_INITIALISED";
+        case ENGINE_UPDATE_ERROR_INPUT_MODULE_UPDATE_FAILED:            return "ENGINE_UPDATE_ERROR_INPUT_MODULE_UPDATE_FAILED";
         
         // Destruct 
         case ENGINE_DESTRUCT_ERROR_STATE_NOT_INITIALISED:               return "ENGINE_DESTRUCT_ERROR_STATE_NOT_INITIALISED";

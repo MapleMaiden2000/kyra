@@ -7,6 +7,7 @@
 
 #include "kyra/core/memory/zone/memory_zone.h"
 #include "kyra/core/logger/logger.h"
+#include "kyra/core/modules/input/input_module.h"
 
 
 // Internal structure ---------------------------------------------- //
@@ -40,9 +41,39 @@ static void _backend_glfw_window_size_callback(GLFWwindow *window, Int32 width, 
 
 static void _backend_glfw_window_refresh_callback(GLFWwindow *window) {
     // This allows continuous rendering during window resizing/moving
-    // By delegating applicaation to draw new frame
+    // ... by delegating applicaation to draw new frame
     WindowState *state = (WindowState *)glfwGetWindowUserPointer(window);
     if (state && state->callbacks.on_refresh) state->callbacks.on_refresh(state->context);
+}
+
+static void _backend_glfw_key_callback(GLFWwindow *window, Int32 key, Int32 scancode, Int32 action, Int32 mods) {
+    WindowState *state = (WindowState *)glfwGetWindowUserPointer(window);
+
+    // Process via input module (Kyra key codes are aligned with GLFW key codes)
+    input_process_key((InputKeyCode)key, action != GLFW_RELEASE);
+
+    // Invoke user callback
+    if (state && state->callbacks.on_key) state->callbacks.on_key(state->context, key, scancode, action, mods);
+}
+
+static void _backend_glfw_mouse_button_callback(GLFWwindow *window, Int32 button, Int32 action, Int32 mods) {
+    WindowState *state = (WindowState *)glfwGetWindowUserPointer(window);
+    
+    // Process via input module (Kyra mouse codes are aligned with GLFW mouse codes)
+    input_process_mouse_button((InputMouseCode)button, action != GLFW_RELEASE);
+
+    // Invoke user callback
+    if (state && state->callbacks.on_mouse_button) state->callbacks.on_mouse_button(state->context, button, action, mods);
+}
+
+static void _backend_glfw_cursor_position_callback(GLFWwindow *window, Flt64 xpos, Flt64 ypos) {
+    WindowState *state = (WindowState *)glfwGetWindowUserPointer(window);
+    
+    // Process via input module
+    input_process_mouse_move((Int32)xpos, (Int32)ypos);
+
+    // Invoke user callback
+    if (state && state->callbacks.on_mouse_move) state->callbacks.on_mouse_move(state->context, xpos, ypos);
 }
 
 static void _backend_glfw_window_iconify_callback(GLFWwindow *window, Int32 iconify) {
@@ -143,6 +174,9 @@ WindowResult backend_glfw_construct_window(const WindowConfigs configs, const Wi
         glfwSetWindowCloseCallback(state->handle, _backend_glfw_window_close_callback);
         glfwSetWindowSizeCallback(state->handle, _backend_glfw_window_size_callback);
         glfwSetWindowRefreshCallback(state->handle, _backend_glfw_window_refresh_callback);
+        glfwSetKeyCallback(state->handle, _backend_glfw_key_callback);
+        glfwSetMouseButtonCallback(state->handle, _backend_glfw_mouse_button_callback);
+        glfwSetCursorPosCallback(state->handle, _backend_glfw_cursor_position_callback);
         glfwSetWindowIconifyCallback(state->handle, _backend_glfw_window_iconify_callback);
         glfwSetWindowFocusCallback(state->handle, _backend_glfw_window_focus_callback);
     }
