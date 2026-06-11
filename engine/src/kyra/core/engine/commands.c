@@ -30,6 +30,11 @@ static void _engine_commands_log(const Sender sender, const Listener listener, c
     else if (!strcmp(level, "debug"))   KYRA_LOG_ENGINE_DEBUG("%s", message);
 }
 
+static void _engine_commands_report_memory_usage(const Sender sender, const Listener listener, const VoidPtr data) {
+    // Report memory usage via memory manager
+    memory_manager_report();
+}
+
 static void _engine_commands_exit(const Sender sender, const Listener listener, const VoidPtr data) {
     KYRA_LOG_ENGINE_INFO("Processing exit request...");
 
@@ -42,6 +47,7 @@ static void _engine_commands_exit(const Sender sender, const Listener listener, 
 
 KYRA_ENGINE_API void engine_commands_init(void) {
     command_module_register_action("engine", "log", NULL, _engine_commands_log);
+    command_module_register_action("engine", "mem", NULL, _engine_commands_report_memory_usage);
     command_module_register_action("engine", "exit", NULL, _engine_commands_exit);
 }
 

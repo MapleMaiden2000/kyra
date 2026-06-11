@@ -5,6 +5,10 @@
 #include <stdio.h>
 
 #include "kyra/core/misc/console/console.h"
+#include "kyra/core/modules/command/command_module.h"
+
+
+// Internal state ----------------------------------------------------------- //
 
 static MemoryManager *memory_manager = NULL;
 
@@ -82,12 +86,15 @@ static void _memory_manager_draw_progress_bar(const ByteSize used_memory, const 
     {
         console_set_foreground(colour);
         
-        Char output[KYRA_LINE_MAX_LENGTH];
+        Char output[KYRA_SHORT_LINE_MAX_LENGTH];
         memset(output, 0, sizeof(output));
 
         output[0] = '[';
-        for (ByteSize index = 1; index < bar_width + 1; ++index) {
-            if (index < num_blocks) output[index] = '=';
+        for (ByteSize index = 1, itr_block = 0; index < bar_width + 1; ++index) {
+            if (itr_block < num_blocks) {
+                output[index] = '=';
+                ++itr_block;
+            }
             else output[index] = ' ';
         }
         output[bar_width] = ']';
@@ -98,13 +105,13 @@ static void _memory_manager_draw_progress_bar(const ByteSize used_memory, const 
 
     // Print percentage, used memory and capacity
     {
-        Char str_used_memory[KYRA_LINE_MAX_LENGTH];
-        Char str_capacity[KYRA_LINE_MAX_LENGTH];
+        Char str_used_memory[KYRA_SHORT_LINE_MAX_LENGTH];
+        Char str_capacity[KYRA_SHORT_LINE_MAX_LENGTH];
 
         _memory_manager_format_bytes(used_memory, str_used_memory, sizeof(str_used_memory));
         _memory_manager_format_bytes(capacity, str_capacity, sizeof(str_capacity));
 
-        console_write_line(" (%.2f%%) used memory: %s; capacity: %s", percentage, str_used_memory, str_capacity);        
+        console_write_line(" (%.2f%%) %s / %s", percentage, str_used_memory, str_capacity);        
     }
 }
 
@@ -225,13 +232,16 @@ KYRA_ENGINE_API MemoryManagerResult memory_manager_get(MemoryManager **out_manag
 KYRA_ENGINE_API MemoryManagerResult memory_manager_report(void) {
     if (!memory_manager) return MEMORY_MANAGER_ERROR_STATE_NOT_INITIALISED;
     
-    printf("===== Kyra Engine Memory Report =====\n");
+    KYRA_CONSOLE_PRINT_FG(CONSOLE_COLOUR_BRIGHT_GREEN, "===== Kyra Engine Memory Report =====");
     
+    // Momentarily in-activate command line
+    command_module_inactivate_command_line();
+
     // Memory manager properties
     {
-        printf("Total:\n");
-        printf("Pool address: %p\n", memory_manager->pool);
-        printf("Zone count: %u\n", memory_manager->zone_count);
+        KYRA_CONSOLE_PRINT_FG(CONSOLE_COLOUR_BRIGHT_GREEN, "Total:");
+        KYRA_CONSOLE_PRINT_FG(CONSOLE_COLOUR_BRIGHT_GREEN, "Pool address: %p", memory_manager->pool);
+        KYRA_CONSOLE_PRINT_FG(CONSOLE_COLOUR_BRIGHT_GREEN, "Zone count: %u", memory_manager->zone_count);
         
         // Draw progress bar
         _memory_manager_draw_progress_bar(memory_manager->used_memory, memory_manager->capacity, 60);
@@ -239,19 +249,22 @@ KYRA_ENGINE_API MemoryManagerResult memory_manager_report(void) {
 
     // Memory zones
     {
-        printf("\nZones:\n");
+        KYRA_CONSOLE_PRINT_FG(CONSOLE_COLOUR_BRIGHT_GREEN, "\nZones:");
         for (ByteSize index = 0; index < memory_manager->zone_count; ++index) {
             MemoryZone *zone = &memory_manager->zones[index];
             
             // The '%-15s' ensures all progress bars start at the same vertical column
-            printf("> %-15s ", zone->name); 
+            console_write("> %-15s ", zone->name); 
             
             // Draw progress bar
             _memory_manager_draw_progress_bar(zone->used_memory, zone->capacity, 40);
         }
     }
 
-    printf("=====================================\n");
+    KYRA_CONSOLE_PRINT_FG(CONSOLE_COLOUR_BRIGHT_GREEN, "=====================================");
+
+    // Re-activate command line
+    command_module_activate_command_line();
 
     return MEMORY_MANAGER_SUCCESS;
 }

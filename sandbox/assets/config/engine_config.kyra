@@ -28,7 +28,7 @@
     "command": {
         "history_limit": 20,
         "undo_limit": 25,
-        "echo_prompt": false,
+        "echo_prompt": true,
         "max_arguments": 16,
         "token_max_length": 256
     }
