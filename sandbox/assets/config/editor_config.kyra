@@ -2,6 +2,7 @@
     "info": {
         "name": "Kyra Editor"
     },
+    
     "window": {
         "title": "Kyra Editor",
         "width": 1280,

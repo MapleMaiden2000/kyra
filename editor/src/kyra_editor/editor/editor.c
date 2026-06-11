@@ -40,7 +40,7 @@ EditorResult _editor_configure(ConstStr config_filepath) {
     File config_file = {0};
     fs_result = platform_filesystem_file_open(config_filepath, FILESYSTEM_IO_MODE_READ, FILESYSTEM_FILE_MODE_BINARY, &config_file);
     if (fs_result != FILESYSTEM_SUCCESS) {
-        KYRA_PRINT_ERROR("Editor: Failed to open config file: %s (Error: %s)", config_filepath, platform_filesystem_result_to_string(fs_result));
+        KYRA_CONSOLE_PRINT_ERROR("Editor: Failed to open config file: %s (Error: %s)", config_filepath, platform_filesystem_result_to_string(fs_result));
         
         return EDITOR_HELPER_ERROR_FAILED_TO_OPEN_CONFIG_FILE;
     }
@@ -49,7 +49,7 @@ EditorResult _editor_configure(ConstStr config_filepath) {
     ByteSize file_size = 0;
     fs_result = platform_filesystem_file_size(&config_file, &file_size);
     if (fs_result != FILESYSTEM_SUCCESS) {
-        KYRA_PRINT_ERROR("Editor: Failed to get size of file: %s (Error: %s)", config_filepath, platform_filesystem_result_to_string(fs_result));
+        KYRA_CONSOLE_PRINT_ERROR("Editor: Failed to get size of file: %s (Error: %s)", config_filepath, platform_filesystem_result_to_string(fs_result));
         
         return EDITOR_HELPER_ERROR_FAILED_TO_GET_FILE_SIZE;
     }
@@ -59,7 +59,7 @@ EditorResult _editor_configure(ConstStr config_filepath) {
     ByteSize buffer_memsize = 0;
     MemoryZoneResult mz_result = memory_zone_allocate("editor", file_size, (VoidPtr *)&buffer, &buffer_memsize);
     if (mz_result != MEMORY_ZONE_SUCCESS) {
-        KYRA_PRINT_ERROR("Editor: Failed to get allocate memory for raw buffer (Error: %s)", config_filepath, memory_zone_result_to_string(mz_result));
+        KYRA_CONSOLE_PRINT_ERROR("Editor: Failed to get allocate memory for raw buffer (Error: %s)", config_filepath, memory_zone_result_to_string(mz_result));
 
         return EDITOR_HELPER_ERROR_FAILED_TO_ALLOCATE_MEMORY_FOR_CONFIG_RAW_BUFFER;
     }
@@ -68,7 +68,7 @@ EditorResult _editor_configure(ConstStr config_filepath) {
         // If data buffer failed to allocate, close the config file
         fs_result = platform_filesystem_file_close(&config_file);
         if (fs_result != FILESYSTEM_SUCCESS) {
-            KYRA_PRINT_ERROR("Editor: Failed to close file: %s (Error: %s)", config_filepath, platform_filesystem_result_to_string(fs_result));
+            KYRA_CONSOLE_PRINT_ERROR("Editor: Failed to close file: %s (Error: %s)", config_filepath, platform_filesystem_result_to_string(fs_result));
             
             return EDITOR_HELPER_ERROR_FAILED_TO_CLOSE_CONFIG_FILE;
         }
@@ -78,7 +78,7 @@ EditorResult _editor_configure(ConstStr config_filepath) {
     ByteSize bytes_read = 0;
     fs_result = platform_filesystem_read_all(&config_file, &bytes_read, &buffer);
     if (fs_result != FILESYSTEM_SUCCESS) {
-        KYRA_PRINT_ERROR("Editor: Failed to read file: %s (Error: %s)", config_filepath, platform_filesystem_result_to_string(fs_result));
+        KYRA_CONSOLE_PRINT_ERROR("Editor: Failed to read file: %s (Error: %s)", config_filepath, platform_filesystem_result_to_string(fs_result));
         
         // Deallocate raw buffer 
         if (memory_zone_deallocate("editor", (VoidPtr)buffer, buffer_memsize) != MEMORY_ZONE_SUCCESS)
@@ -93,7 +93,7 @@ EditorResult _editor_configure(ConstStr config_filepath) {
     // Close configuration file
     fs_result = platform_filesystem_file_close(&config_file);
     if (fs_result != FILESYSTEM_SUCCESS) {
-        KYRA_PRINT_ERROR("Editor: Failed to close file: %s (Error: %s)", config_filepath, platform_filesystem_result_to_string(fs_result));
+        KYRA_CONSOLE_PRINT_ERROR("Editor: Failed to close file: %s (Error: %s)", config_filepath, platform_filesystem_result_to_string(fs_result));
     
         // Deallocate raw buffer 
         if (memory_zone_deallocate("editor", (VoidPtr)buffer, buffer_memsize) != MEMORY_ZONE_SUCCESS)
@@ -105,7 +105,7 @@ EditorResult _editor_configure(ConstStr config_filepath) {
     // Parse to JSON
     cJSON *json = cJSON_Parse(buffer);    
     if (!json) {
-        KYRA_PRINT_ERROR("Editor: Failed to parse to JSON.");
+        KYRA_CONSOLE_PRINT_ERROR("Editor: Failed to parse to JSON.");
         
         return EDITOR_HELPER_ERROR_FAILED_TO_PARSE_TO_JSON;
     }
@@ -119,7 +119,7 @@ EditorResult _editor_configure(ConstStr config_filepath) {
     if (!window) {
         // Failed to locate...
 
-        KYRA_PRINT_ERROR("Editor: Failed to locate section 'window' in JSON config.\n Config: %s", json->valuestring);
+        KYRA_CONSOLE_PRINT_ERROR("Editor: Failed to locate section 'window' in JSON config.\n Config: %s", json->valuestring);
 
         // Delete config JSON object
         cJSON_Delete(json);

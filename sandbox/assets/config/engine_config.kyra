@@ -17,10 +17,19 @@
             "string": "4 MB",
             "containers": "12 MB",
             "delegates": "1 MB",
-            "loggers": "128 KB",
-            "platform": "512 KB",
-            "input": "64 KB",
+            "loggers": "64 KB",
+            "platform": "64 KB",
+            "input": "32 KB",
+            "command": "256 KB",
             "editor": "128 KB"
         }
+    },
+
+    "command": {
+        "history_limit": 20,
+        "undo_limit": 25,
+        "echo_prompt": false,
+        "max_arguments": 16,
+        "token_max_length": 256
     }
 }

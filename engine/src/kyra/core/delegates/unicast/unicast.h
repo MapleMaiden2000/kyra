@@ -12,6 +12,8 @@ KYRA_ENGINE_API DelegateResult      delegate_unicast_shutdown(void);
 KYRA_ENGINE_API DelegateResult      delegate_unicast_register(ConstStr id, const Listener listener, const DelegateFunction callback);
 KYRA_ENGINE_API DelegateResult      delegate_unicast_unregister(ConstStr id);
 
+KYRA_ENGINE_API DelegateResult      delegate_unicast_update(ConstStr id, const Listener listener, const DelegateFunction callback);
+
 KYRA_ENGINE_API DelegateResult      delegate_unicast_set_callback(ConstStr id, const DelegateFunction callback);
 KYRA_ENGINE_API DelegateResult      delegate_unicast_invoke(ConstStr id, const Sender sender, const VoidPtr data);
 

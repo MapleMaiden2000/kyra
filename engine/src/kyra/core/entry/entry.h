@@ -10,7 +10,7 @@ Int32 main(Int32 argc, Str *argv) {
     
     // Engine startup
     {
-        ConstStr engine_config_filepath = "sandbox/configs/engine_config.kyra";
+        ConstStr engine_config_filepath = "sandbox/assets/config/engine_config.kyra";
         
         // Pre-construction stage
         engine_result = engine_preconstruct(engine_config_filepath);
@@ -40,6 +40,9 @@ Int32 main(Int32 argc, Str *argv) {
         // Application startup
         if (app->on_startup) app->on_startup(app);
 
+        // Setup command line
+        command_module_setup_command_line("kyra");
+
         // Main loop
         {
             HiResClock clock;
@@ -52,10 +55,25 @@ Int32 main(Int32 argc, Str *argv) {
                 // Reset for next frame
                 clock_hires_split(&clock);
 
+                // Update input module
+                input_module_update();
+
                 // Update engine
                 {
                     engine_result = engine_update((Flt32)elapsed);
                     if (engine_result != ENGINE_SUCCESS) return (Int32)engine_result;
+                }
+
+                // Poll command line input
+                {
+                    String cmd;
+                    if (command_module_poll_input(&cmd) == COMMAND_MODULE_SUCCESS) {
+                        // Process command...
+                        command_module_dispatch(cmd, (VoidPtr)app);                        
+
+                        // Destruct command string
+                        container_string_destruct(&cmd);
+                    }
                 }
 
                 // Application update
@@ -76,16 +94,12 @@ Int32 main(Int32 argc, Str *argv) {
     // Engine shutdown
     {
         engine_result = engine_destruct();
-        if (engine_result != ENGINE_SUCCESS) return (Int32)engine_result;
+        if (engine_result != ENGINE_SUCCESS) { 
+            KYRA_CONSOLE_PRINT_INFO("%s", engine_result_to_string(engine_result));
+            return (Int32)engine_result;
+        }
     }
 
     return 0;
 }
-
-
-
-
-
-
-
 

@@ -257,6 +257,36 @@ KYRA_ENGINE_API DelegateResult delegate_multicast_unregister(ConstStr id, const 
     return DELEGATE_MULTICAST_ERROR_FAILED_TO_LOCATE_LISTENER_FOR_ID;
 }
 
+KYRA_ENGINE_API DelegateResult delegate_multicast_update(ConstStr id, const Listener listener, const DelegateFunction old_callback, const DelegateFunction new_callback) {
+    if (!state) return DELEGATE_MULTICAST_ERROR_NOT_INITIALISED;
+    if (!id) return DELEGATE_MULTICAST_ERROR_DELEGATE_ID_NULL;
+    if (!old_callback) return DELEGATE_MULTICAST_ERROR_DELEGATE_OLD_CALLBACK_NULL;
+    if (!new_callback) return DELEGATE_MULTICAST_ERROR_DELEGATE_NEW_CALLBACK_NULL;
+
+    MulticastDelegate delegate = NULL;
+    ContainerResult search_result = container_map_search(state->delegate_map, id, (VoidPtr)&delegate);
+    if (search_result != CONTAINER_SUCCESS) return DELEGATE_MULTICAST_ERROR_FAILED_TO_LOCATE_DELEGATE_FOR_ID;
+
+    ByteSize listeners_size = container_array_size(delegate->listeners);
+    ByteSize callbacks_size = container_array_size(delegate->callbacks);
+    for (ByteSize index = 0; index < listeners_size && index < callbacks_size; ++index) {
+        // For each listener-callback pair...
+
+        Listener ls = *(Listener *)container_array_get_at(delegate->listeners, index);
+        DelegateFunction callback = *(DelegateFunction *)container_array_get_at(delegate->callbacks, index);
+
+        if (ls == listener && callback == old_callback) {
+            // Listener matched with specified 'listener'...
+            // Callback matched with specified 'old_callback'...
+            
+            // Update old callback with new one
+            container_array_update_at(&delegate->callbacks, index, (VoidPtr)&new_callback);
+        }
+    }
+    
+    return DELEGATE_SUCCESS;
+}
+
 KYRA_ENGINE_API DelegateResult delegate_multicast_invoke(ConstStr id, const Sender sender, const VoidPtr data) {
     if (!state) return DELEGATE_MULTICAST_ERROR_NOT_INITIALISED;
     if (!id) return DELEGATE_MULTICAST_ERROR_DELEGATE_ID_NULL;
@@ -339,6 +369,8 @@ KYRA_ENGINE_API ConstStr delegate_multicast_result_to_string(const DelegateResul
         case DELEGATE_MULTICAST_ERROR_NOT_INITIALISED:                                      return "DELEGATE_MULTICAST_ERROR_NOT_INITIALISED";
         case DELEGATE_MULTICAST_ERROR_DELEGATE_ID_NULL:                                     return "DELEGATE_MULTICAST_ERROR_DELEGATE_ID_NULL";
         case DELEGATE_MULTICAST_ERROR_DELEGATE_CALLBACK_NULL:                               return "DELEGATE_MULTICAST_ERROR_DELEGATE_CALLBACK_NULL";
+        case DELEGATE_MULTICAST_ERROR_DELEGATE_OLD_CALLBACK_NULL:                           return "DELEGATE_MULTICAST_ERROR_DELEGATE_OLD_CALLBACK_NULL";
+        case DELEGATE_MULTICAST_ERROR_DELEGATE_NEW_CALLBACK_NULL:                           return "DELEGATE_MULTICAST_ERROR_DELEGATE_NEW_CALLBACK_NULL";
         case DELEGATE_MULTICAST_ERROR_DELEGATE_LISTENER_NULL:                               return "DELEGATE_MULTICAST_ERROR_DELEGATE_LISTENER_NULL";
         case DELEGATE_MULTICAST_ERROR_DELEGATE_SENDER_NULL:                                 return "DELEGATE_MULTICAST_ERROR_DELEGATE_SENDER_NULL";
         case DELEGATE_MULTICAST_ERROR_FAILED_TO_ALLOCATE_MEMORY_FOR_STATE:                  return "DELEGATE_MULTICAST_ERROR_FAILED_TO_ALLOCATE_MEMORY_FOR_STATE";

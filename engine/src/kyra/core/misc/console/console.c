@@ -5,6 +5,12 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "kyra/core/memory/zone/memory_zone.h"
+#include "kyra/core/modules/command/command_module.h"
+
+
+// Internal structure ------------------------------------------- //
+
 #if KYRA_PLATFORM_WINDOWS
     #include <windows.h>
     #include <conio.h>
@@ -19,12 +25,13 @@
         #define ENABLE_INPUT_PROCESSING 0x0002
     #endif
 
+
     // --- Console handles --- //
 
-    static HANDLE   console_input_handle = INVALID_HANDLE_VALUE;
-    static HANDLE   console_output_handle = INVALID_HANDLE_VALUE;
-    static DWORD    console_input_mode = 0;
-    static DWORD    console_output_mode = 0;
+    static HANDLE       console_input_handle = INVALID_HANDLE_VALUE;
+    static HANDLE       console_output_handle = INVALID_HANDLE_VALUE;
+    static DWORD        console_input_mode = 0;
+    static DWORD        console_output_mode = 0;
 
 #endif
 
@@ -69,7 +76,7 @@ KYRA_ENGINE_API ConsoleResult console_startup(void) {
 
 KYRA_ENGINE_API ConsoleResult console_shutdown(void) {
     if (!initialised) return CONSOLE_ERROR_NOT_INITIALISED;
-
+    
     #if KYRA_PLATFORM_WINDOWS
         // Restore original console modes to handles
         {
@@ -80,6 +87,9 @@ KYRA_ENGINE_API ConsoleResult console_shutdown(void) {
                 SetConsoleMode(console_output_handle, console_output_mode);
         }
     #endif
+
+    // Set static 'initialised' false
+    initialised = false; 
 
     return CONSOLE_SUCCESS;
 }
@@ -110,7 +120,7 @@ KYRA_ENGINE_API ConsoleResult console_set_title(ConstStr title) {
 
 // -- Colour -- //
 
-KYRA_ENGINE_API ConsoleResult console_set_foreground(ConsoleColour colour) {
+KYRA_ENGINE_API ConsoleResult console_set_foreground(const ConsoleColour colour) {
     if (!initialised) return CONSOLE_ERROR_NOT_INITIALISED;
 
     fprintf(stdout, "\x1b[38;5;%dm", colour);
@@ -118,7 +128,7 @@ KYRA_ENGINE_API ConsoleResult console_set_foreground(ConsoleColour colour) {
     return CONSOLE_SUCCESS;
 }
 
-KYRA_ENGINE_API ConsoleResult console_set_background(ConsoleColour colour) {
+KYRA_ENGINE_API ConsoleResult console_set_background(const ConsoleColour colour) {
     if (!initialised) return CONSOLE_ERROR_NOT_INITIALISED;
 
     fprintf(stdout, "\x1b[48;5;%dm", colour);
@@ -126,7 +136,7 @@ KYRA_ENGINE_API ConsoleResult console_set_background(ConsoleColour colour) {
     return CONSOLE_SUCCESS;
 }
 
-KYRA_ENGINE_API ConsoleResult console_set_foreground_rgb(UInt8 r, UInt8 g, UInt8 b) {
+KYRA_ENGINE_API ConsoleResult console_set_foreground_rgb(const UInt8 r, const UInt8 g, const UInt8 b) {
     if (!initialised) return CONSOLE_ERROR_NOT_INITIALISED;
 
     fprintf(stdout, "\x1b[38;2;%d;%d;%dm", r, g, b);
@@ -134,10 +144,29 @@ KYRA_ENGINE_API ConsoleResult console_set_foreground_rgb(UInt8 r, UInt8 g, UInt8
     return CONSOLE_SUCCESS;
 }
 
-KYRA_ENGINE_API ConsoleResult console_set_background_rgb(UInt8 r, UInt8 g, UInt8 b) {
+KYRA_ENGINE_API ConsoleResult console_set_background_rgb(const UInt8 r, const UInt8 g, const UInt8 b) {
     if (!initialised) return CONSOLE_ERROR_NOT_INITIALISED;
 
     fprintf(stdout, "\x1b[48;2;%d;%d;%dm", r, g, b);
+
+    return CONSOLE_SUCCESS;
+}
+
+
+// -- Cursor -- //
+
+KYRA_ENGINE_API ConsoleResult console_cursor_move_absolute(const Int32 column) {
+    if (!initialised) return CONSOLE_ERROR_NOT_INITIALISED;
+
+    fprintf(stdout, "\x1b[%dG", column);
+
+    return CONSOLE_SUCCESS;
+}
+
+KYRA_ENGINE_API ConsoleResult console_cursor_clear(const ConsoleCursorMode mode) {
+    if (!initialised) return CONSOLE_ERROR_NOT_INITIALISED;
+
+    fprintf(stdout, "\x1b[%dK", mode);
 
     return CONSOLE_SUCCESS;
 }
@@ -147,11 +176,24 @@ KYRA_ENGINE_API ConsoleResult console_set_background_rgb(UInt8 r, UInt8 g, UInt8
 
 KYRA_ENGINE_API ConsoleResult console_write(ConstStr format, ...) {
     if (!initialised) return CONSOLE_ERROR_NOT_INITIALISED;
+    
+    Bool command_line_active = command_module_command_line_active();
+
+    if (command_line_active) {
+        // Return to beginning of line
+        fprintf(stdout, "\r");
+
+        // Clear line
+        console_cursor_clear(CONSOLE_CURSOR_MODE_TO_END);
+    }
 
     VaList args;
     va_start(args, format);
     vfprintf(stdout, format, args);
     va_end(args);
+
+    // Update command line to reflect change
+    if (command_line_active) command_module_update_command_line();
 
     return CONSOLE_SUCCESS;
 }
@@ -159,11 +201,24 @@ KYRA_ENGINE_API ConsoleResult console_write(ConstStr format, ...) {
 KYRA_ENGINE_API ConsoleResult console_write_line(ConstStr format, ...) {
     if (!initialised) return CONSOLE_ERROR_NOT_INITIALISED;
 
+    Bool command_line_active = command_module_command_line_active();
+
+    if (command_line_active) {
+        // Return to beginning of line
+        fprintf(stdout, "\r");
+
+        // Clear line
+        console_cursor_clear(CONSOLE_CURSOR_MODE_TO_END);
+    }
+
     VaList args;
     va_start(args, format);
     vfprintf(stdout, format, args);
     va_end(args);
     fprintf(stdout, "\n");
+
+    // Update command line to reflect change
+    if (command_line_active) command_module_update_command_line();
 
     return CONSOLE_SUCCESS;
 }
@@ -224,15 +279,15 @@ KYRA_ENGINE_API ConsoleResult console_format_strike(void) {
 
 KYRA_ENGINE_API ConstStr console_result_to_string(const ConsoleResult result) {
     switch (result) {
-        case CONSOLE_SUCCESS:                           return "CONSOLE_SUCCESS";
+        case CONSOLE_SUCCESS:                                                   return "CONSOLE_SUCCESS";
 
-        case CONSOLE_ERROR_ALREADY_INITIALISED:         return "CONSOLE_ERROR_ALREADY_INITIALISED";
-        case CONSOLE_ERROR_NOT_INITIALISED:             return "CONSOLE_ERROR_NOT_INITIALISED";
-        case CONSOLE_ERROR_FAILED_TO_GET_HANDLES:       return "CONSOLE_ERROR_FAILED_TO_GET_HANDLES";
-        case CONSOLE_ERROR_FAILED_TO_GET_MODES:         return "CONSOLE_ERROR_FAILED_TO_GET_MODES";
-        case CONSOLE_ERROR_FAILED_TO_SET_MODES:         return "CONSOLE_ERROR_FAILED_TO_SET_MODES";
-    
-        default:                                        return "UNKNOWN_CONSOLE_RESULT";
+        case CONSOLE_ERROR_ALREADY_INITIALISED:                                 return "CONSOLE_ERROR_ALREADY_INITIALISED";
+        case CONSOLE_ERROR_NOT_INITIALISED:                                     return "CONSOLE_ERROR_NOT_INITIALISED";
+        case CONSOLE_ERROR_FAILED_TO_GET_HANDLES:                               return "CONSOLE_ERROR_FAILED_TO_GET_HANDLES";
+        case CONSOLE_ERROR_FAILED_TO_GET_MODES:                                 return "CONSOLE_ERROR_FAILED_TO_GET_MODES";
+        case CONSOLE_ERROR_FAILED_TO_SET_MODES:                                 return "CONSOLE_ERROR_FAILED_TO_SET_MODES";
+
+        default:                                                                return "UNKNOWN_CONSOLE_RESULT";
     }
 }
 

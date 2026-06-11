@@ -14,6 +14,7 @@
 #include "kyra/core/misc/console/console.h"
 #include "kyra/core/platform/filesystem/filesystem.h"
 #include "kyra/core/memory/zone/memory_zone.h"
+#include "kyra/core/modules/command/command_module.h"
 
 
 // Internal structures --------------------------------------------- //
@@ -169,7 +170,6 @@ KYRA_ENGINE_API LoggerResult logger_startup(ConstStr config_filepath) {
 
         // Read entire file data
         ByteSize read_bytes = 0;
-        
         if (platform_filesystem_read_all(&config_file, &read_bytes, &buffer) != FILESYSTEM_SUCCESS)
             return LOGGER_ERROR_FAILED_TO_READ_CONFIG_FILE;
         
@@ -270,10 +270,10 @@ KYRA_ENGINE_API LoggerResult logger_startup(ConstStr config_filepath) {
 
 KYRA_ENGINE_API LoggerResult logger_shutdown(void) {
     if (!state) return LOGGER_ERROR_NOT_INITIALISED;
-
+    
     // Destroy all logger handles
-    ByteSize count = container_map_size(state->logger_map);
-    for (ByteSize index = 0; index < count; ++index) {
+    ByteSize capacity = container_map_capacity(state->logger_map);
+    for (ByteSize index = 0; index < capacity; ++index) {
         String key;
         Logger handle;
 
@@ -301,14 +301,14 @@ KYRA_ENGINE_API LoggerResult logger_shutdown(void) {
         // Destroy 'id' string 
         if (container_string_destruct(&state->out_directory) != CONTAINER_SUCCESS)
             return LOGGER_ERROR_FAILED_TO_DESTRUCT_OUT_DIRECTORY_STRING;
-
-        // Deallocate state
-        if (memory_zone_deallocate("loggers", (VoidPtr)state, state->memory_size) != MEMORY_ZONE_SUCCESS)
-            return LOGGER_ERROR_FAILED_TO_DEALLOCATE_MEMORY_OF_STATE;
-
-        // Set to NULL
-        state = NULL; 
     }
+
+    // Deallocate state
+    if (memory_zone_deallocate("loggers", (VoidPtr)state, state->memory_size) != MEMORY_ZONE_SUCCESS)
+        return LOGGER_ERROR_FAILED_TO_DEALLOCATE_MEMORY_OF_STATE;
+
+    // Set to NULL
+    state = NULL; 
 
     return LOGGER_SUCCESS;
 }
@@ -503,6 +503,9 @@ KYRA_ENGINE_API LoggerResult logger_print(
 
     // ----- Print stage ----- //
     
+    // Momentarily in-activate command line
+    command_module_inactivate_command_line();
+
     // Print header
     {
         console_reset();
@@ -647,6 +650,9 @@ KYRA_ENGINE_API LoggerResult logger_print(
     // Output to file
     if (handle.has_file) platform_filesystem_write_data(&handle.file, strlen(out_to_file), out_to_file);
     
+    // Re-activate command line
+    command_module_activate_command_line();
+
     return LOGGER_SUCCESS;
 }
 

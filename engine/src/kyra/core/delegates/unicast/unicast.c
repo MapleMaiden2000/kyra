@@ -101,13 +101,8 @@ KYRA_ENGINE_API DelegateResult delegate_unicast_register(ConstStr id, const List
     if (search_result == CONTAINER_SUCCESS) {
         // Delegate is already registered...
         
-        if (delegate) {
-            // Update delegate listener and callback
-            delegate->listener = listener;
-            delegate->callback = callback;
-        }
-
-        return DELEGATE_SUCCESS;
+        // Considered update
+        return delegate_unicast_update(id, listener, callback);
     }
 
     // Allocate for delegate
@@ -156,6 +151,32 @@ KYRA_ENGINE_API DelegateResult delegate_unicast_unregister(ConstStr id) {
     // Deallocate delegate
     if (memory_zone_deallocate("delegates", (VoidPtr)delegate, delegate->memory_size) != MEMORY_ZONE_SUCCESS)
         return DELEGATE_UNICAST_ERROR_FAILED_TO_DEALLOCATE_MEMORY_OF_DELEGATE;
+
+    return DELEGATE_SUCCESS;
+}
+
+KYRA_ENGINE_API DelegateResult delegate_unicast_update(ConstStr id, const Listener listener, const DelegateFunction callback) {
+    if (!state) return DELEGATE_UNICAST_ERROR_NOT_INITIALISED;
+    if (!id) return DELEGATE_UNICAST_ERROR_DELEGATE_ID_NULL;
+    if (!callback) return DELEGATE_UNICAST_ERROR_DELEGATE_CALLBACK_NULL;
+
+    UnicastDelegate delegate = NULL;
+
+    // Search for delegate
+    ContainerResult search_result = container_map_search(state->delegate_map, id, (VoidPtr)&delegate);
+
+    if (search_result != CONTAINER_SUCCESS) {
+        // Delegate is not registered...
+
+        // Considered registration
+        return delegate_unicast_register(id, listener, callback);
+    }
+
+    if (delegate) {
+        // Update delegate listener and callback
+        delegate->listener = listener;
+        delegate->callback = callback;
+    }
 
     return DELEGATE_SUCCESS;
 }

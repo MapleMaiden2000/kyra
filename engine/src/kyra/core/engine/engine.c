@@ -14,6 +14,8 @@
 #include "kyra/core/delegates/multicast/multicast.h"
 #include "kyra/core/logger/logger.h"
 #include "kyra/core/modules/input/input_module.h"
+#include "kyra/core/modules/command/command_module.h"
+#include "kyra/core/engine/commands.h"
 
 
 // Engine state --------------------------------------------------------- //
@@ -68,7 +70,7 @@ EngineResult _engine_configure(ConstStr config_filepath) {
     File config_file = {0};
     fs_result = platform_filesystem_file_open(config_filepath, FILESYSTEM_IO_MODE_READ, FILESYSTEM_FILE_MODE_BINARY, &config_file);
     if (fs_result != FILESYSTEM_SUCCESS) {
-        KYRA_PRINT_ERROR("Failed to open config file: %s (Error: %s)", config_filepath, platform_filesystem_result_to_string(fs_result));
+        KYRA_CONSOLE_PRINT_ERROR("Failed to open config file: %s (Error: %s)", config_filepath, platform_filesystem_result_to_string(fs_result));
         
         return ENGINE_HELPER_ERROR_FAILED_TO_OPEN_CONFIG_FILE;
     }
@@ -77,7 +79,7 @@ EngineResult _engine_configure(ConstStr config_filepath) {
     ByteSize file_size = 0;
     fs_result = platform_filesystem_file_size(&config_file, &file_size);
     if (fs_result != FILESYSTEM_SUCCESS) {
-        KYRA_PRINT_ERROR("Failed to get size of file: %s (Error: %s)", config_filepath, platform_filesystem_result_to_string(fs_result));
+        KYRA_CONSOLE_PRINT_ERROR("Failed to get size of file: %s (Error: %s)", config_filepath, platform_filesystem_result_to_string(fs_result));
         
         return ENGINE_HELPER_ERROR_FAILED_TO_GET_FILE_SIZE;
     }
@@ -88,7 +90,7 @@ EngineResult _engine_configure(ConstStr config_filepath) {
         // If data buffer failed to allocate, close the config file
         fs_result = platform_filesystem_file_close(&config_file);
         if (fs_result != FILESYSTEM_SUCCESS) {
-            KYRA_PRINT_ERROR("Failed to close file: %s (Error: %s)", config_filepath, platform_filesystem_result_to_string(fs_result));
+            KYRA_CONSOLE_PRINT_ERROR("Failed to close file: %s (Error: %s)", config_filepath, platform_filesystem_result_to_string(fs_result));
             
             return ENGINE_HELPER_ERROR_FAILED_TO_CLOSE_CONFIG_FILE;
         }
@@ -99,7 +101,7 @@ EngineResult _engine_configure(ConstStr config_filepath) {
     fs_result = platform_filesystem_read_all(&config_file, &bytes_read, &buffer);
     if (fs_result != FILESYSTEM_SUCCESS) {
         free(buffer);
-        KYRA_PRINT_ERROR("Failed to read file: %s (Error: %s)", config_filepath, platform_filesystem_result_to_string(fs_result));
+        KYRA_CONSOLE_PRINT_ERROR("Failed to read file: %s (Error: %s)", config_filepath, platform_filesystem_result_to_string(fs_result));
         
         return ENGINE_HELPER_ERROR_FAILED_TO_CLOSE_CONFIG_FILE;
     }
@@ -111,7 +113,7 @@ EngineResult _engine_configure(ConstStr config_filepath) {
     fs_result = platform_filesystem_file_close(&config_file);
     if (fs_result != FILESYSTEM_SUCCESS) {
         free(buffer);
-        KYRA_PRINT_ERROR("Failed to close file: %s (Error: %s)", config_filepath, platform_filesystem_result_to_string(fs_result));
+        KYRA_CONSOLE_PRINT_ERROR("Failed to close file: %s (Error: %s)", config_filepath, platform_filesystem_result_to_string(fs_result));
         
         return ENGINE_HELPER_ERROR_FAILED_TO_CLOSE_CONFIG_FILE;
     }
@@ -119,7 +121,7 @@ EngineResult _engine_configure(ConstStr config_filepath) {
     // Parse to JSON
     cJSON *json = cJSON_Parse(buffer);    
     if (!json) {
-        KYRA_PRINT_ERROR("Failed to parse to JSON.");
+        KYRA_CONSOLE_PRINT_ERROR("Failed to parse to JSON.");
         
         return ENGINE_HELPER_ERROR_FAILED_TO_PARSE_TO_JSON;
     }
@@ -170,7 +172,7 @@ EngineResult _engine_configure(ConstStr config_filepath) {
                     
                     // Notify a warning
                     // Assign zone capacity as zero
-                    KYRA_PRINT_WARN(
+                    KYRA_CONSOLE_PRINT_WARN(
                         "Failed to parse capacity for memory zone: %s (Error: %s). Assigning capacity as zero...", 
                         zone->name, 
                         engine_result_to_string(parse_result)
@@ -178,7 +180,7 @@ EngineResult _engine_configure(ConstStr config_filepath) {
                 }
                 zone->capacity = capacity;
 
-                KYRA_PRINT_INFO("Registered memory zone: %s (bytes: %llu).", zone->name, zone->capacity);
+                KYRA_CONSOLE_PRINT_INFO("Registered memory zone: %s (bytes: %llu).", zone->name, zone->capacity);
             }
         }
     }
@@ -199,7 +201,7 @@ KYRA_ENGINE_API EngineResult engine_preconstruct(ConstStr config_filepath) {
     // Console startup
     console_startup();
 
-    KYRA_PRINT_INFO("Preconstructing engine...");
+    KYRA_CONSOLE_PRINT_INFO("Preconstructing engine...");
     
     // Allocate and reset engine state
     state = malloc(sizeof(EngineState));
@@ -220,7 +222,7 @@ KYRA_ENGINE_API EngineResult engine_preconstruct(ConstStr config_filepath) {
     // Memory manager startup
     MemoryManagerResult memory_manager_result = memory_manager_startup(&state->memory_config);
     if (memory_manager_result != MEMORY_MANAGER_SUCCESS) {
-        KYRA_PRINT_ERROR("Memory manager startup failed (Error: %s).", memory_manager_result_to_string(memory_manager_result));
+        KYRA_CONSOLE_PRINT_ERROR("Memory manager startup failed (Error: %s).", memory_manager_result_to_string(memory_manager_result));
         
         // Call for engine destruction
         return engine_destruct();
@@ -231,7 +233,7 @@ KYRA_ENGINE_API EngineResult engine_preconstruct(ConstStr config_filepath) {
         // Uni-cast
         DelegateResult unicast_result = delegate_unicast_startup(); 
         if (unicast_result != DELEGATE_SUCCESS) {
-            KYRA_PRINT_ERROR("Delegate (uni-cast) startup failed (Error: %s).", delegate_unicast_result_to_string(unicast_result));
+            KYRA_CONSOLE_PRINT_ERROR("Delegate (uni-cast) startup failed (Error: %s).", delegate_unicast_result_to_string(unicast_result));
 
             // Call for engine destruction
             return engine_destruct();
@@ -240,7 +242,7 @@ KYRA_ENGINE_API EngineResult engine_preconstruct(ConstStr config_filepath) {
         // Multi-cast
         DelegateResult multicast_result = delegate_multicast_startup(); 
         if (multicast_result != DELEGATE_SUCCESS) {
-            KYRA_PRINT_ERROR("Delegate (multi-cast) startup failed (Error: %s).", delegate_multicast_result_to_string(multicast_result));
+            KYRA_CONSOLE_PRINT_ERROR("Delegate (multi-cast) startup failed (Error: %s).", delegate_multicast_result_to_string(multicast_result));
 
             // Call for engine destruction
             return engine_destruct();
@@ -250,16 +252,40 @@ KYRA_ENGINE_API EngineResult engine_preconstruct(ConstStr config_filepath) {
     // Input module startup
     InputModuleResult input_module_result = input_module_startup(); 
     if (input_module_result != INPUT_MODULE_SUCCESS) {
-        KYRA_PRINT_ERROR("Input module startup failed (Error: %s).", input_module_result_to_string(input_module_result));
+        KYRA_CONSOLE_PRINT_ERROR("Input module startup failed (Error: %s).", input_module_result_to_string(input_module_result));
 
         // Call for engine destruction
         return engine_destruct();
     }
 
+    // Command module
+    {
+        // Module startup
+        CommandModuleResult cmd_module_result = command_module_startup(config_filepath);
+        if (cmd_module_result != COMMAND_MODULE_SUCCESS) {
+            KYRA_CONSOLE_PRINT_ERROR("Command module startup failed (Error: %s).", command_module_result_to_string(cmd_module_result));
+
+            // Call for engine destruction
+            return engine_destruct();
+        }
+
+        // Register engine commands schema
+        cmd_module_result = command_module_register_schema("engine/assets/config/commands.kyra");
+        if (cmd_module_result != COMMAND_MODULE_SUCCESS) {
+            KYRA_CONSOLE_PRINT_ERROR("Command module schema registration failed (Error: %s).", command_module_result_to_string(cmd_module_result));
+
+            // Call for engine destruction
+            return engine_destruct();
+        }
+
+        // Initialise engine commands
+        engine_commands_init();
+    }
+
     // Logger
     LoggerResult logger_result = logger_startup(config_filepath);
     if (logger_result != LOGGER_SUCCESS) {
-        KYRA_PRINT_ERROR("Logger startup failed (Error: %s).", logger_result_to_string(logger_result));
+        KYRA_CONSOLE_PRINT_ERROR("Logger startup failed (Error: %s).", logger_result_to_string(logger_result));
 
         // Call for engine destruction
         return engine_destruct();
@@ -268,7 +294,7 @@ KYRA_ENGINE_API EngineResult engine_preconstruct(ConstStr config_filepath) {
     // Set engine as running
     state->running = true;
 
-    KYRA_PRINT_INFO("Engine preconstructed.");
+    KYRA_CONSOLE_PRINT_INFO("Engine preconstructed.");
 
     return ENGINE_SUCCESS;
 }
@@ -276,9 +302,9 @@ KYRA_ENGINE_API EngineResult engine_preconstruct(ConstStr config_filepath) {
 KYRA_ENGINE_API EngineResult engine_construct(void) {
     if (!state) return ENGINE_CONSTRUCT_ERROR_STATE_NOT_INITIALISED;
 
-    KYRA_PRINT_INFO("Constructing engine...");
+    KYRA_CONSOLE_PRINT_INFO("Constructing engine...");
     
-    KYRA_PRINT_INFO("Engine constructed.");
+    KYRA_CONSOLE_PRINT_INFO("Engine constructed.");
 
     return ENGINE_SUCCESS;
 }
@@ -296,35 +322,40 @@ KYRA_ENGINE_API EngineResult engine_update(Flt32 delta_time) {
 KYRA_ENGINE_API EngineResult engine_destruct(void) {
     if (!state) return ENGINE_DESTRUCT_ERROR_STATE_NOT_INITIALISED;
 
-    KYRA_PRINT_INFO("Destructing engine...");
+    KYRA_LOG_ENGINE_INFO("Destructing engine...");
     
     // Logger shutdown
     LoggerResult logger_result = logger_shutdown();
     if (logger_result != LOGGER_SUCCESS)
-        KYRA_PRINT_ERROR("Logger shutdown failed (Error: %s).", logger_result_to_string(logger_result));
+        KYRA_CONSOLE_PRINT_ERROR("Logger shutdown failed (Error: %s).", logger_result_to_string(logger_result));
+
+    // Command module shutdown
+    CommandModuleResult cmd_module_result = command_module_shutdown();
+    if (cmd_module_result != COMMAND_MODULE_SUCCESS)
+        KYRA_CONSOLE_PRINT_ERROR("Command module shutdown failed (Error: %s).", command_module_result_to_string(cmd_module_result));
 
     // Input module shutdown
     InputModuleResult input_module_result = input_module_shutdown();
     if (input_module_result != INPUT_MODULE_SUCCESS)
-        KYRA_PRINT_ERROR("Input module shutdown failed (Error: %s).", input_module_result_to_string(input_module_result));
+        KYRA_CONSOLE_PRINT_ERROR("Input module shutdown failed (Error: %s).", input_module_result_to_string(input_module_result));
 
     // Delegate systems shutdown
     {
         // Uni-cast
         DelegateResult unicast_result = delegate_unicast_shutdown(); 
         if (unicast_result != DELEGATE_SUCCESS)
-            KYRA_PRINT_ERROR("Delegate (uni-cast) shutdown failed (Error: %s).", delegate_unicast_result_to_string(unicast_result));
+            KYRA_CONSOLE_PRINT_ERROR("Delegate (uni-cast) shutdown failed (Error: %s).", delegate_unicast_result_to_string(unicast_result));
 
         // Multi-cast
         DelegateResult multicast_result = delegate_multicast_shutdown(); 
         if (multicast_result != DELEGATE_SUCCESS)
-            KYRA_PRINT_ERROR("Delegate (multi-cast) startup failed (Error: %s).", delegate_multicast_result_to_string(multicast_result));
+            KYRA_CONSOLE_PRINT_ERROR("Delegate (multi-cast) startup failed (Error: %s).", delegate_multicast_result_to_string(multicast_result));
     }
 
     // Memory manager shutdown
     MemoryManagerResult memory_manager_result = memory_manager_shutdown();
     if (memory_manager_result != MEMORY_MANAGER_SUCCESS)
-        KYRA_PRINT_ERROR("Memory manager shutdown failed (Error: %s).", memory_manager_result_to_string(memory_manager_result));
+        KYRA_CONSOLE_PRINT_ERROR("Memory manager shutdown failed (Error: %s).", memory_manager_result_to_string(memory_manager_result));
 
     // Deallocate memory configuration properties
     {
@@ -343,7 +374,7 @@ KYRA_ENGINE_API EngineResult engine_destruct(void) {
     // Set to NULL
     state = NULL;
 
-    KYRA_PRINT_INFO("Engine destructed.");
+    KYRA_CONSOLE_PRINT_INFO("Engine destructed.");
 
     // Console shutdown
     console_shutdown();

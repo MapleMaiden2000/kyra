@@ -6,13 +6,13 @@
 // Return codes --------------------------------------------------------- //
 
 typedef enum Console_Result {
-    CONSOLE_SUCCESS                         = 0,
+    CONSOLE_SUCCESS                                                 = 0,
 
-    CONSOLE_ERROR_ALREADY_INITIALISED       = -1,
-    CONSOLE_ERROR_NOT_INITIALISED           = -2,
-    CONSOLE_ERROR_FAILED_TO_GET_HANDLES     = -3,
-    CONSOLE_ERROR_FAILED_TO_GET_MODES       = -4,
-    CONSOLE_ERROR_FAILED_TO_SET_MODES       = -5,
+    CONSOLE_ERROR_ALREADY_INITIALISED                               = -1,
+    CONSOLE_ERROR_NOT_INITIALISED                                   = -2,
+    CONSOLE_ERROR_FAILED_TO_GET_HANDLES                             = -3,
+    CONSOLE_ERROR_FAILED_TO_GET_MODES                               = -4,
+    CONSOLE_ERROR_FAILED_TO_SET_MODES                               = -5,
 
 } ConsoleResult;
 
@@ -40,4 +40,15 @@ typedef enum Console_Colour {
     CONSOLE_COLOUR_BRIGHT_CYAN              = 14,
     CONSOLE_COLOUR_BRIGHT_WHITE             = 15
 } ConsoleColour;
+
+
+// Cursor mode ---------------------------------------------------------- //
+
+typedef enum Console_Cursor_Mode {
+    CONSOLE_CURSOR_MODE_TO_END,
+    CONSOLE_CURSOR_MODE_TO_BEGINNING,
+    CONSOLE_CURSOR_MODE_ALL
+
+} ConsoleCursorMode;
+
 

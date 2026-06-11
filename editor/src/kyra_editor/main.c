@@ -6,7 +6,7 @@
 static void on_startup(Application *app) {
     KYRA_LOG_PRINT("EDITOR_APP", LOGGER_VERBOSITY_INFO, "Initialising editor...");
     
-    ConstStr config_filepath = "sandbox/configs/editor_config.kyra";
+    ConstStr config_filepath = "sandbox/assets/config/editor_config.kyra";
 
     // Open the editor
     if (editor_startup(config_filepath) != EDITOR_SUCCESS) {
@@ -39,13 +39,13 @@ static void on_shutdown(Application *app) {
     // Destruct application logger
     LoggerResult logger_result = logger_unregister("EDITOR_APP");
     if (logger_result != LOGGER_SUCCESS)
-        KYRA_PRINT_ERROR("EditorApp: Failed to unregister logger (Error: %s)", logger_result_to_string(logger_result));
+        KYRA_CONSOLE_PRINT_ERROR("EditorApp: Failed to unregister logger (Error: %s)", logger_result_to_string(logger_result));
 }
 
 Application *application_create(void) {
     static Application app;
 
-    ConstStr config_filepath = "sandbox/configs/editor_config.kyra";
+    ConstStr config_filepath = "sandbox/assets/config/editor_config.kyra";
 
     // Configure application
     if (application_configure(config_filepath, &app) != APPLICATION_SUCCESS)
@@ -58,7 +58,7 @@ Application *application_create(void) {
     // Construct logger for application
     LoggerResult logger_result = logger_register("EDITOR_APP", "editor_app.log", LOGGER_FLAG_ALL);
     if (logger_result != LOGGER_SUCCESS)
-        KYRA_PRINT_ERROR("EditorApp: Failed to register logger (Error: %s)", logger_result_to_string(logger_result));
+        KYRA_CONSOLE_PRINT_ERROR("EditorApp: Failed to register logger (Error: %s)", logger_result_to_string(logger_result));
 
     return &app;
 }

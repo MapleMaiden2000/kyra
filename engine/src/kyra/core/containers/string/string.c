@@ -245,6 +245,7 @@ KYRA_ENGINE_API ContainerResult container_string_construct_formatted(String *out
 
 KYRA_ENGINE_API ContainerResult container_string_destruct(String *string) {
     if (!string) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
+    if (!(*string)) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
     if (!(*string)->memory_size) return CONTAINER_STRING_ERROR_REF_STRING_NOT_VALID;
 
     // Deallocate memory for string
@@ -258,7 +259,7 @@ KYRA_ENGINE_API ContainerResult container_string_destruct(String *string) {
 }
 
 KYRA_ENGINE_API ContainerResult container_string_clear(String *string) {
-    if (!string) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
+    if (!string || !(*string)) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
     
     // Clear string
     memset((*string)->data, 0, (*string)->size);
@@ -270,7 +271,7 @@ KYRA_ENGINE_API ContainerResult container_string_clear(String *string) {
 }
 
 KYRA_ENGINE_API ContainerResult container_string_set(String *string, ConstStr value) {
-    if (!string) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
+    if (!string || !(*string)) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
     if (!value) return CONTAINER_STRING_ERROR_VALUE_NULL;
     
     ByteSize new_size = strlen(value);
@@ -297,7 +298,7 @@ KYRA_ENGINE_API ContainerResult container_string_set(String *string, ConstStr va
 }
 
 KYRA_ENGINE_API ContainerResult container_string_append(String *string, ConstStr value) {
-    if (!string) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
+    if (!string || !(*string)) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
     if (!value) return CONTAINER_STRING_ERROR_VALUE_NULL;
 
     ByteSize string_size = (*string)->size;
@@ -328,7 +329,7 @@ KYRA_ENGINE_API ContainerResult container_string_append(String *string, ConstStr
 }
 
 KYRA_ENGINE_API ContainerResult container_string_append_chars(String *string, const Char c, const ByteSize count) {
-    if (!string) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
+    if (!string || !(*string)) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
 
     // Return if there is zero character needed to append
     if (count == 0) return CONTAINER_SUCCESS;
@@ -360,7 +361,7 @@ KYRA_ENGINE_API ContainerResult container_string_append_chars(String *string, co
 }
 
 KYRA_ENGINE_API ContainerResult container_string_append_formatted(String *string, ConstStr format, ...) {
-    if (!string) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
+    if (!string || !(*string)) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
     if (!format) return CONTAINER_STRING_ERROR_FORMAT_NULL;
 
     VaList args;
@@ -396,7 +397,7 @@ KYRA_ENGINE_API ContainerResult container_string_append_formatted(String *string
 }
 
 KYRA_ENGINE_API ContainerResult container_string_detach(String *string) {
-    if (!string) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
+    if (!string || !(*string)) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
 
     // Detach last character from end of string
     // Decrement string size
@@ -406,7 +407,7 @@ KYRA_ENGINE_API ContainerResult container_string_detach(String *string) {
 }
 
 KYRA_ENGINE_API ContainerResult container_string_detach_ranged(String *string, const ByteSize range) {
-    if (!string) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
+    if (!string || !(*string)) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
 
     // Return if there is range for removal is zero
     if (range == 0) return CONTAINER_SUCCESS;
@@ -419,7 +420,7 @@ KYRA_ENGINE_API ContainerResult container_string_detach_ranged(String *string, c
 }
 
 KYRA_ENGINE_API ContainerResult container_string_insert(String *string, const ByteSize index, ConstStr substr) {
-    if (!string) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
+    if (!string || !(*string)) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
     if (!substr) return CONTAINER_STRING_ERROR_SUBSTRING_NULL;
     if (index > (*string)->size) return CONTAINER_STRING_ERROR_INDEX_OUT_OF_BOUNDS;
     
@@ -456,7 +457,7 @@ KYRA_ENGINE_API ContainerResult container_string_insert(String *string, const By
 }
 
 KYRA_ENGINE_API ContainerResult container_string_insert_chars(String *string, const ByteSize index, const Char c, const ByteSize count) {
-    if (!string) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
+    if (!string || !(*string)) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
     if (index > (*string)->size) return CONTAINER_STRING_ERROR_INDEX_OUT_OF_BOUNDS;
 
     // Return if there is number of character to insert is zero
@@ -494,7 +495,7 @@ KYRA_ENGINE_API ContainerResult container_string_insert_chars(String *string, co
 }
 
 KYRA_ENGINE_API ContainerResult container_string_insert_formatted(String *string, const ByteSize index, ConstStr format, ...) {
-    if (!string) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
+    if (!string || !(*string)) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
     if (index > (*string)->size) return CONTAINER_STRING_ERROR_INDEX_OUT_OF_BOUNDS;
     if (!format) return CONTAINER_STRING_ERROR_FORMAT_NULL;
 
@@ -537,7 +538,7 @@ KYRA_ENGINE_API ContainerResult container_string_insert_formatted(String *string
 }
 
 KYRA_ENGINE_API ContainerResult container_string_remove(String *string, ConstStr substr, const Bool remove_all) {
-    if (!string) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
+    if (!string || !(*string)) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
     if (!substr) return CONTAINER_STRING_ERROR_SUBSTRING_NULL;
 
     ByteSize substring_size = strlen(substr);
@@ -568,7 +569,7 @@ KYRA_ENGINE_API ContainerResult container_string_remove(String *string, ConstStr
 }
 
 KYRA_ENGINE_API ContainerResult container_string_remove_chars(String *string, const Char c, const Bool remove_all) {\
-    if (!string) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
+    if (!string || !(*string)) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
 
     // Return if requested to remove null-terminator character
     if (c == '\0') return CONTAINER_SUCCESS;
@@ -597,7 +598,7 @@ KYRA_ENGINE_API ContainerResult container_string_remove_chars(String *string, co
 }
 
 KYRA_ENGINE_API ContainerResult container_string_remove_at(String *string, const ByteSize index, const ByteSize count) {
-    if (!string) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
+    if (!string || !(*string)) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
     if (index > (*string)->size) return CONTAINER_STRING_ERROR_INDEX_OUT_OF_BOUNDS;
 
     // Return if number of characters to remove is zero
@@ -625,7 +626,7 @@ KYRA_ENGINE_API ContainerResult container_string_remove_at(String *string, const
 }
 
 KYRA_ENGINE_API ContainerResult container_string_replace_char(String *string, const Char old_char, const Char new_char) {
-    if (!string) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
+    if (!string || !(*string)) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
 
     // Return if old character is the same as new character
     if (old_char == new_char) return CONTAINER_SUCCESS;
@@ -705,7 +706,7 @@ KYRA_ENGINE_API ContainerResult container_string_replace_char(String *string, co
 }
 
 KYRA_ENGINE_API ContainerResult container_string_replace_substring(String *string, ConstStr old_substr, ConstStr new_substr) {
-    if (!string) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
+    if (!string || !(*string)) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
     if (!old_substr || !new_substr) return CONTAINER_STRING_ERROR_SUBSTRING_NULL;
 
     // Return if old substring is the same as new substring
@@ -914,7 +915,7 @@ KYRA_ENGINE_API ContainerResult container_string_replace_substring(String *strin
 }
 
 KYRA_ENGINE_API ContainerResult container_string_to_lower(String *string) {
-    if (!string) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
+    if (!string || !(*string)) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
 
     ByteSize string_size = (*string)->size;
     ByteSize index = 0;
@@ -987,7 +988,7 @@ KYRA_ENGINE_API ContainerResult container_string_to_lower(String *string) {
 }
 
 KYRA_ENGINE_API ContainerResult container_string_to_upper(String *string) {
-    if (!string) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
+    if (!string || !(*string)) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
 
     ByteSize string_size = (*string)->size;
     ByteSize index = 0;
@@ -1060,7 +1061,7 @@ KYRA_ENGINE_API ContainerResult container_string_to_upper(String *string) {
 }
 
 KYRA_ENGINE_API ContainerResult container_string_trim_left(String *string) {
-    if (!string) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
+    if (!string || !(*string)) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
 
     ByteSize start = 0, end = (*string)->size;
 
@@ -1193,7 +1194,7 @@ KYRA_ENGINE_API ContainerResult container_string_trim_left(String *string) {
 }
 
 KYRA_ENGINE_API ContainerResult container_string_trim_right(String *string) {
-    if (!string) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
+    if (!string || !(*string)) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
 
     ByteSize start = 0, end = (*string)->size;
 
@@ -1327,7 +1328,7 @@ KYRA_ENGINE_API ContainerResult container_string_trim(String *string) {
 }
 
 KYRA_ENGINE_API ContainerResult container_string_filter_char(String *string, const Char c, const Bool keep) {
-    if (!string) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
+    if (!string || !(*string)) return CONTAINER_STRING_ERROR_REF_STRING_NULL;
 
     // Return if requested to remove null-terminator character
     if (c == '\0') return CONTAINER_SUCCESS;

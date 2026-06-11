@@ -6,6 +6,7 @@
 
 #include "kyra/core/memory/zone/memory_zone.h"
 #include "kyra/core/logger/logger.h"
+#include "kyra/core/modules/command/command_module.h"
 
 
 // Internal structure ------------------------------------------ //

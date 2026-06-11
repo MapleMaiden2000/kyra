@@ -125,7 +125,7 @@ KYRA_ENGINE_API MemoryManagerResult memory_manager_startup(const MemoryConfig *c
         ByteSize num_classes = 0;
         MemoryManagerResult compute_result = _memory_manager_compute_size_classes(config->zones[index].capacity, &num_classes, NULL);
         if (compute_result != MEMORY_MANAGER_SUCCESS) {
-            KYRA_PRINT_ERROR(
+            KYRA_CONSOLE_PRINT_ERROR(
                 "Failed to compute size classes for zone: %s (Error: %s).", 
                 config->zones[index].name, 
                 memory_manager_result_to_string(compute_result)
@@ -174,7 +174,7 @@ KYRA_ENGINE_API MemoryManagerResult memory_manager_startup(const MemoryConfig *c
         zone->size_classes = (MemoryZoneSizeClass *)addr_size_class;
         MemoryManagerResult compute_result = _memory_manager_compute_size_classes(config->zones[index].capacity, &zone->num_classes, &zone->size_classes);
         if (compute_result != MEMORY_MANAGER_SUCCESS) {
-            KYRA_PRINT_ERROR(
+            KYRA_CONSOLE_PRINT_ERROR(
                 "Failed to compute size classes for zone: %s (Error: %s).", 
                 config->zones[index].name, 
                 memory_manager_result_to_string(compute_result)

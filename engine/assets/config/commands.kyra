@@ -1,0 +1,23 @@
+{
+    "root": "engine",
+    
+    "actions": {
+        "log": {
+            "num_args": 2,
+            "desc": "Log a message of specified verbosity level.",
+            "usage": "/engine log <level> <message>"
+        },
+
+        "mem": {
+            "num_args": 0,
+            "desc": "Report memory usage.",
+            "usage": "/engine mem"
+        },
+
+        "exit": {
+            "num_args": 0,
+            "desc": "Request engine loop exit and shutdown.",
+            "usage": "/engine exit"
+        }
+    }
+}

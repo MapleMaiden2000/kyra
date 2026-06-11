@@ -35,6 +35,7 @@ project "engine"
 
     defines { 
         "KYRA_EXPORT",
+        "KYRA_SHORT_LINE_MAX_LENGTH=256",
         "KYRA_LINE_MAX_LENGTH=1024",
         "KYRA_LOG_MESSAGE_MAX_LENGTH=4096",
         "KYRA_MEMORY_ALIGNMENT_SIZE=16",
