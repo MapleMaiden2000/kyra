@@ -44,17 +44,16 @@ typedef struct Command_Module_State {
     ConstStr   *token_list;
     ByteSize    token_list_memory_size;
 
-    Str         history;
-    ByteSize    history_size;
+    Str         history_stack;
+    ByteSize    history_stack_size;
     Int32       history_view_index;
-    ByteSize    history_memory_size;    
+    ByteSize    history_stack_memory_size;    
 
     Str         temp_buffer;
     ByteSize    temp_buffer_size;
     ByteSize    temp_buffer_memory_size;
 
     Int32       history_limit;
-    Int32       undo_limit;
     Bool        echo_prompt;
     ByteSize    max_arguments;
     ByteSize    token_max_length;
@@ -179,10 +178,6 @@ KYRA_ENGINE_API CommandModuleResult command_module_startup(ConstStr config_filep
             cJSON *history_limit = cJSON_GetObjectItemCaseSensitive(command, "history_limit");
             if (history_limit && cJSON_IsNumber(history_limit)) state->history_limit = history_limit->valueint;
             
-            // Undo limit
-            cJSON *undo_limit = cJSON_GetObjectItemCaseSensitive(command, "undo_limit");
-            if (undo_limit && cJSON_IsNumber(undo_limit)) state->undo_limit = undo_limit->valueint;
-        
             // Echo prompt
             cJSON *echo_prompt = cJSON_GetObjectItemCaseSensitive(command, "echo_prompt");
             if (echo_prompt) state->echo_prompt = cJSON_IsTrue(echo_prompt);
@@ -247,11 +242,14 @@ KYRA_ENGINE_API CommandModuleResult command_module_startup(ConstStr config_filep
     // History
     {
         // Allocate memory
-        if (memory_zone_allocate("command", state->history_limit * KYRA_LINE_MAX_LENGTH, (VoidPtr *)&state->history, &state->history_memory_size) != MEMORY_ZONE_SUCCESS)
-            return COMMAND_MODULE_ERROR_FAILED_TO_ALLOCATE_MEMORY_FOR_HISTORY;
+        if (memory_zone_allocate("command", state->history_limit * KYRA_LINE_MAX_LENGTH, (VoidPtr *)&state->history_stack, &state->history_stack_memory_size) != MEMORY_ZONE_SUCCESS)
+            return COMMAND_MODULE_ERROR_FAILED_TO_ALLOCATE_MEMORY_FOR_HISTORY_STACK;
 
         // Zero out
-        memset(state->history, 0, state->history_memory_size);
+        memset(state->history_stack, 0, state->history_stack_memory_size);
+
+        // Initialise history view index
+        state->history_view_index = -1;
     }
 
     // Temp buffer
@@ -294,8 +292,8 @@ KYRA_ENGINE_API CommandModuleResult command_module_shutdown(void) {
             return COMMAND_MODULE_ERROR_FAILED_TO_DEALLOCATE_MEMORY_OF_TEMP_BUFFER;
 
         // History
-        if (memory_zone_deallocate("command", state->history, state->history_memory_size) != MEMORY_ZONE_SUCCESS)
-            return COMMAND_MODULE_ERROR_FAILED_TO_DEALLOCATE_MEMORY_OF_HISTORY;
+        if (memory_zone_deallocate("command", state->history_stack, state->history_stack_memory_size) != MEMORY_ZONE_SUCCESS)
+            return COMMAND_MODULE_ERROR_FAILED_TO_DEALLOCATE_MEMORY_OF_HISTORY_STACK;
 
         // Token list
         if (memory_zone_deallocate("command", state->token_list, state->token_list_memory_size) != MEMORY_ZONE_SUCCESS)
@@ -698,8 +696,8 @@ KYRA_ENGINE_API CommandModuleResult command_module_poll_input(String *out_string
                 switch (key) {
                     // -- UP ARROW -- //
                     case 72:
-                        if ((state->history_limit > 0) && (state->history_size > 0)) {
-                            // Entering history list...
+                        if ((state->history_limit > 0) && (state->history_stack_size > 0)) {
+                            // Entering history stack...
 
                             // Save current input buffer to temp buffer
                             if ((state->input_buffer_size > 0) && (state->history_view_index == -1)) {
@@ -710,11 +708,11 @@ KYRA_ENGINE_API CommandModuleResult command_module_poll_input(String *out_string
                             }
 
                             // Advance history view index
-                            if (state->history_view_index < (Int32)(state->history_size - 1)) ++state->history_view_index;
+                            if (state->history_view_index < (Int32)(state->history_stack_size - 1)) ++state->history_view_index;
                             
                             if (state->history_view_index >= 0) {
                                 // Copy element buffer to input buffer
-                                Str elem = (Str)((UIntPtr)state->history + (state->history_view_index * KYRA_LINE_MAX_LENGTH));
+                                Str elem = (Str)((UIntPtr)state->history_stack + (state->history_view_index * KYRA_LINE_MAX_LENGTH));
                                 strncpy(state->input_buffer, elem, KYRA_LINE_MAX_LENGTH);
                                 
                                 // Update input buffer and cursor state
@@ -736,26 +734,29 @@ KYRA_ENGINE_API CommandModuleResult command_module_poll_input(String *out_string
                         if (state->history_limit > 0) {
                             // Roll back history view index
                             if (state->history_view_index > -1) --state->history_view_index;
-                            
-                            // Leaving history list...
-                            
+                                                        
                             // Restore input buffer from temp buffer
                             if (state->history_view_index == -1) {
-                                strncpy(state->input_buffer, state->temp_buffer, KYRA_LINE_MAX_LENGTH);
-                                
-                                // Update input buffer size and cursor state
-                                {
-                                    state->input_buffer_size = state->temp_buffer_size;
-                                    state->cursor_position = state->input_buffer_size; 
+                                // Leaving history stack...
+    
+                                if (state->history_stack_size > 0) {
+                                    // Restore input buffer from temp buffer
+                                    strncpy(state->input_buffer, state->temp_buffer, KYRA_LINE_MAX_LENGTH);
+                                    
+                                    // Update input buffer size and cursor state
+                                    {
+                                        state->input_buffer_size = state->temp_buffer_size;
+                                        state->cursor_position = state->input_buffer_size; 
+                                    }
                                 }
                             }
 
                             // Otherwise...
                             else {
-                                // Still in history list...
+                                // Still in history stack...
 
                                 // Copy element buffer to input buffer
-                                Str elem = (Str)((UIntPtr)state->history + (state->history_view_index * KYRA_LINE_MAX_LENGTH));
+                                Str elem = (Str)((UIntPtr)state->history_stack + (state->history_view_index * KYRA_LINE_MAX_LENGTH));
                                 strncpy(state->input_buffer, elem, KYRA_LINE_MAX_LENGTH);
 
                                 // Update input buffer and cursor state
@@ -797,6 +798,38 @@ KYRA_ENGINE_API CommandModuleResult command_module_poll_input(String *out_string
                         }
 
                         break;
+
+                    // -- DELETE -- //
+                    case 83:
+                        if (state->cursor_position < state->input_buffer_size) {
+                            if (state->history_view_index > -1) {
+                                // Inside history stack...
+
+                                // Copy element buffer to input buffer
+                                Str elem = (Str)((UIntPtr)state->history_stack + (state->history_view_index * KYRA_LINE_MAX_LENGTH));
+                                strncpy(state->input_buffer, elem, KYRA_LINE_MAX_LENGTH);
+
+                                // Update input buffer
+                                state->input_buffer_size = strlen(state->input_buffer);
+                            
+                                // Leave history stack immediately
+                                state->history_view_index = -1;
+                            }
+
+                            // Shift all trailing character to the left
+                            ByteSize shift_size = state->input_buffer_size - state->cursor_position;
+                            memmove(&state->input_buffer[state->cursor_position], &state->input_buffer[state->cursor_position + 1], shift_size);
+                        
+                            // Decrement input buffer size
+                            // Null terminate
+                            state->input_buffer[--state->input_buffer_size] = '\0';
+
+                            // Update command line to reflect change
+                            CommandModuleResult update_result = command_module_update_command_line();
+                            if (update_result != COMMAND_MODULE_SUCCESS) return update_result;
+                        }
+                        
+                        break;
                     }
 
                 return COMMAND_MODULE_POLL_STATUS_PENDING;
@@ -828,17 +861,17 @@ KYRA_ENGINE_API CommandModuleResult command_module_poll_input(String *out_string
                         // Handle history
                         if ((state->input_buffer_size > 0) && (state->history_limit > 0)) {
                             // Shift trailing 'elements' to the right
-                            ByteSize shift_size = (state->history_size < state->history_limit) ? (state->history_limit - 1) * KYRA_LINE_MAX_LENGTH : state->history_size * KYRA_LINE_MAX_LENGTH;
-                            memmove((Str)((UIntPtr)state->history + KYRA_LINE_MAX_LENGTH), state->history, shift_size);
+                            ByteSize shift_size = (state->history_stack_size < state->history_limit) ? (state->history_limit - 1) * KYRA_LINE_MAX_LENGTH : state->history_stack_size * KYRA_LINE_MAX_LENGTH;
+                            memmove((Str)((UIntPtr)state->history_stack + KYRA_LINE_MAX_LENGTH), state->history_stack, shift_size);
 
-                            // Save input buffer 'snapshot' to history list
-                            strncpy(state->history, state->input_buffer, KYRA_LINE_MAX_LENGTH);                                
+                            // Save input buffer 'snapshot' to history stack
+                            strncpy(state->history_stack, state->input_buffer, KYRA_LINE_MAX_LENGTH);                                
 
                             // Reset history view index
                             state->history_view_index = -1;
 
-                            // Increment history list size until reached history limit
-                            if (state->history_size < state->history_limit) ++state->history_size;
+                            // Increment history stack size until reached history limit
+                            if (state->history_stack_size < state->history_limit) ++state->history_stack_size;
 
                             // Reset temp buffer
                             {
@@ -860,8 +893,6 @@ KYRA_ENGINE_API CommandModuleResult command_module_poll_input(String *out_string
                             state->cursor_position = 0;
                         }
 
-                        KYRA_CONSOLE_PRINT_INFO("limit: %llu, size: %llu", state->history_limit, state->history_size);
-
                         // Return success to signify command line being registered
                         return COMMAND_MODULE_SUCCESS;
 
@@ -870,16 +901,16 @@ KYRA_ENGINE_API CommandModuleResult command_module_poll_input(String *out_string
                         // Backspace only works if cursor not at beginning of line
                         if (state->cursor_position > 0) {
                             if (state->history_view_index > -1) {
-                                // Inside history list...
+                                // Inside history stack...
 
                                 // Copy element buffer to input buffer
-                                Str elem = (Str)((UIntPtr)state->history + (state->history_view_index * KYRA_LINE_MAX_LENGTH));
+                                Str elem = (Str)((UIntPtr)state->history_stack + (state->history_view_index * KYRA_LINE_MAX_LENGTH));
                                 strncpy(state->input_buffer, elem, KYRA_LINE_MAX_LENGTH);
 
                                 // Update input buffer
                                 state->input_buffer_size = strlen(state->input_buffer);
                             
-                                // Leave history list immediately
+                                // Leave history stack immediately
                                 state->history_view_index = -1;
                             }
 
@@ -906,19 +937,19 @@ KYRA_ENGINE_API CommandModuleResult command_module_poll_input(String *out_string
                         // Covering ASCII range for printable characters
                         if ((ch >= 32 && ch <= 126) && (state->input_buffer_size < KYRA_LINE_MAX_LENGTH - 1)) {
                             if (state->history_view_index > -1) {
-                                // Inside history list...
+                                // Inside history stack...
 
                                 // Copy element buffer to input buffer
-                                Str elem = (Str)((UIntPtr)state->history + (state->history_view_index * KYRA_LINE_MAX_LENGTH));
+                                Str elem = (Str)((UIntPtr)state->history_stack + (state->history_view_index * KYRA_LINE_MAX_LENGTH));
                                 strncpy(state->input_buffer, elem, KYRA_LINE_MAX_LENGTH);
 
                                 // Update input buffer
                                 state->input_buffer_size = strlen(state->input_buffer);
                             
-                                // Leave history list immediately
+                                // Leave history stack immediately
                                 state->history_view_index = -1;
                             }
-                            
+
                             // Handle character insertion
                             if (state->cursor_position < state->input_buffer_size) {
                                 // Shift all trailing characters to the right
@@ -1005,8 +1036,8 @@ KYRA_ENGINE_API ConstStr command_module_result_to_string(const CommandModuleResu
         case COMMAND_MODULE_ERROR_FAILED_TO_LOCATE_COMMAND_ACTION:                          return "COMMAND_MODULE_ERROR_FAILED_TO_LOCATE_COMMAND_ACTION";
         case COMMAND_MODULE_ERROR_NOT_ENOUGH_ARGUMENTS_FOR_COMMAND_DISPATCH:                return "COMMAND_MODULE_ERROR_NOT_ENOUGH_ARGUMENTS_FOR_COMMAND_DISPATCH";
         case COMMAND_MODULE_ERROR_FAILED_TO_INVOKE_DELEGATE_FOR_ACTION:                     return "COMMAND_MODULE_ERROR_FAILED_TO_INVOKE_DELEGATE_FOR_ACTION";
-        case COMMAND_MODULE_ERROR_FAILED_TO_ALLOCATE_MEMORY_FOR_HISTORY:                    return "COMMAND_MODULE_ERROR_FAILED_TO_ALLOCATE_MEMORY_FOR_HISTORY";
-        case COMMAND_MODULE_ERROR_FAILED_TO_DEALLOCATE_MEMORY_OF_HISTORY:                   return "COMMAND_MODULE_ERROR_FAILED_TO_DEALLOCATE_MEMORY_OF_HISTORY";
+        case COMMAND_MODULE_ERROR_FAILED_TO_ALLOCATE_MEMORY_FOR_HISTORY_STACK:              return "COMMAND_MODULE_ERROR_FAILED_TO_ALLOCATE_MEMORY_FOR_HISTORY";
+        case COMMAND_MODULE_ERROR_FAILED_TO_DEALLOCATE_MEMORY_OF_HISTORY_STACK:             return "COMMAND_MODULE_ERROR_FAILED_TO_DEALLOCATE_MEMORY_OF_HISTORY";
         case COMMAND_MODULE_ERROR_FAILED_TO_ALLOCATE_MEMORY_FOR_TEMP_BUFFER:                return "COMMAND_MODULE_ERROR_FAILED_TO_ALLOCATE_MEMORY_FOR_TEMP_BUFFER";
         case COMMAND_MODULE_ERROR_FAILED_TO_DEALLOCATE_MEMORY_OF_TEMP_BUFFER:               return "COMMAND_MODULE_ERROR_FAILED_TO_DEALLOCATE_MEMORY_OF_TEMP_BUFFER";
 
