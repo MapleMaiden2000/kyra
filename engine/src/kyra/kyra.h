@@ -27,20 +27,31 @@
 #include "kyra/core/memory/manager/memory_manager.h"
 #include "kyra/core/memory/zone/memory_zone.h"
 #include "kyra/core/misc/console/console.h"
-#include "kyra/core/containers/string/string.h"
-#include "kyra/core/containers/map/map.h"
-#include "kyra/core/containers/array/array.h"
 #include "kyra/core/hal/clock/wall/wall.h"
 #include "kyra/core/hal/clock/hi_res/hi_res.h"
 #include "kyra/core/hash/hash.h"
+#include "kyra/core/logger/logger.h"
+#include "kyra/core/misc/assert/assert.h"
+#include "kyra/core/engine/engine.h"
+
+// Delegate systems
 #include "kyra/core/delegates/unicast/unicast.h"
 #include "kyra/core/delegates/multicast/multicast.h"
-#include "kyra/core/logger/logger.h"
+
+// Container systems
+#include "kyra/core/containers/string/string.h"
+#include "kyra/core/containers/map/map.h"
+#include "kyra/core/containers/array/array.h"
+
+// Window system
 #include "kyra/core/platform/window/window.h"
 #include "kyra/core/modules/window/window_module.h"
+
+// Input system
 #include "kyra/core/modules/input/input_module.h"
+
+// Command system
 #include "kyra/core/modules/command/command_module.h"
-#include "kyra/core/engine/engine.h"
 
 // Application and Entry point
 #include "kyra/core/application/application.h"

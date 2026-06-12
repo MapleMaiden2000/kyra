@@ -249,7 +249,7 @@ KYRA_ENGINE_API MemoryManagerResult memory_manager_report(void) {
 
     // Memory zones
     {
-        KYRA_CONSOLE_PRINT_FG(CONSOLE_COLOUR_BRIGHT_GREEN, "\nZones:");
+        KYRA_CONSOLE_PRINT_FG(CONSOLE_COLOUR_BRIGHT_GREEN, "Zones:");
         for (ByteSize index = 0; index < memory_manager->zone_count; ++index) {
             MemoryZone *zone = &memory_manager->zones[index];
             
