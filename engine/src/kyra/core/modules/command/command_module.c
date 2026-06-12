@@ -649,91 +649,132 @@ KYRA_ENGINE_API CommandModuleResult command_module_poll_input(String *out_string
 
         if (_kbhit()) {
             // Get input
-            Char ch = (Char)_getch();
+            Int32 key = _getch();
+            Char ch = (Char)key;
 
-            switch (ch) {
-                // -- ENTER -- //
-                case '\r':
-                case '\n':
-                    // Null terminate
-                    state->input_buffer[state->input_buffer_size] = '\0';
+            if (key == 0 || key == 0xe0) {
+                // Detected first byte indicating a special key...
 
-                    // Echo prompt (if specified)
-                    if (state->echo_prompt) {
-                        // Return to beginning of line
-                        fprintf(stdout, "\r");
+                // Read second byte
+                key = _getch();
 
-                        // Clear line
-                        console_cursor_clear(CONSOLE_CURSOR_MODE_TO_END);
-
-                        // Echo print prompt
-                        fprintf(stdout, "%s%s\n", state->prompt_header, state->input_buffer);
-                        
-                        fflush(stdout);
-                    }
-
-                    // Construct input string
-                    // Save to ref (for command processing)
-                    if (container_string_construct(state->input_buffer, out_string) != CONTAINER_SUCCESS)
-                        return COMMAND_MODULE_ERROR_FAILED_TO_CONSTRUCT_INPUT_BUFFER_STRING;
-
-                    // Reset input and cursor states
-                    {
-                        memset(state->input_buffer, 0, state->input_buffer_size);
-                        state->input_buffer_size = 0;
-                        state->cursor_position = 0;
-                    }
-
-                    // Return success to signify command line being registered
-                    return COMMAND_MODULE_SUCCESS;
-
-                // -- BACKSPACE -- //
-                case '\b':
-                    // Backspace only works if cursor not at beginning of line
-                    if (state->cursor_position > 0) {
-                        // Shift all trailing character to the left
-                        ByteSize shift_size = state->input_buffer_size - state->cursor_position + 1;
-                        memmove(&state->input_buffer[state->cursor_position - 1], &state->input_buffer[state->cursor_position], shift_size);
-
-                        // Decrement input buffer size
-                        // Null terminate
-                        state->input_buffer[--state->input_buffer_size] = '\0';
-
-                        // Decrement cursor position
-                        --state->cursor_position;
-
-                        // Update command line to reflect change
-                        CommandModuleResult update_result = command_module_update_command_line();
-                        if (update_result != COMMAND_MODULE_SUCCESS) return update_result;
-                    }
-
-                    break;
-
-                // -- NON-SPECIAL CHARACTERS -- //
-                default:
-                    // Covering ASCII range for printable characters
-                    if ((ch >= 32 && ch <= 126) && (state->input_buffer_size < KYRA_LINE_MAX_LENGTH - 1)) {
-                        // Handle character insertion
-                        if (state->cursor_position < state->input_buffer_size) {
-                            // Shift all trailing characters to the right
-                            ByteSize shift_size = state->input_buffer_size - state->cursor_position + 1;
-                            memmove(&state->input_buffer[state->cursor_position + 1], &state->input_buffer[state->cursor_position], shift_size);
+                switch (key) {
+                    // -- LEFT ARROW -- //
+                    case 75:
+                        if (state->cursor_position > 0) {
+                            // Roll back cursor position
+                            --state->cursor_position;
+                            
+                            // Update command line to reflect change
+                            CommandModuleResult update_result = command_module_update_command_line();
+                            if (update_result != COMMAND_MODULE_SUCCESS) return update_result;
                         }
 
-                        // Assign pressed key character
-                        // Advance cursor position
-                        state->input_buffer[state->cursor_position++] = ch;
+                        break;
 
-                        // Increment input buffer size
-                        // Null terminate
-                        state->input_buffer[++state->input_buffer_size] = '\0';
+                    // -- RIGHT ARROW -- //
+                    case 77:
+                        if (state->cursor_position < state->input_buffer_size) {
+                            // Advance cursor position
+                            ++state->cursor_position;
 
-                        // Update command line to reflect change
-                        CommandModuleResult update_result = command_module_update_command_line();
-                        if (update_result != COMMAND_MODULE_SUCCESS) return update_result;
+                            // Update command line to reflect change
+                            CommandModuleResult update_result = command_module_update_command_line();
+                            if (update_result != COMMAND_MODULE_SUCCESS) return update_result;
+                        }
+
+                        break;
                     }
 
-                    break;
+                return COMMAND_MODULE_POLL_STATUS_PENDING;
+            }
+            else {
+                // Otherwise, standard key...
+
+                switch (ch) {
+                    // -- ENTER -- //
+                    case '\r':
+                    case '\n':
+                        // Null terminate
+                        state->input_buffer[state->input_buffer_size] = '\0';
+
+                        // Echo prompt (if specified)
+                        if (state->echo_prompt) {
+                            // Return to beginning of line
+                            fprintf(stdout, "\r");
+
+                            // Clear line
+                            console_cursor_clear(CONSOLE_CURSOR_MODE_TO_END);
+
+                            // Echo print prompt
+                            KYRA_CONSOLE_PRINT_FG(CONSOLE_COLOUR_GREEN, "%s%s", state->prompt_header, state->input_buffer);
+                            
+                            fflush(stdout);
+                        }
+
+                        // Construct input string
+                        // Save to ref (for command processing)
+                        if (container_string_construct(state->input_buffer, out_string) != CONTAINER_SUCCESS)
+                            return COMMAND_MODULE_ERROR_FAILED_TO_CONSTRUCT_INPUT_BUFFER_STRING;
+
+                        // Reset input and cursor states
+                        {
+                            memset(state->input_buffer, 0, state->input_buffer_size);
+                            state->input_buffer_size = 0;
+                            state->cursor_position = 0;
+                        }
+
+                        // Return success to signify command line being registered
+                        return COMMAND_MODULE_SUCCESS;
+
+                    // -- BACKSPACE -- //
+                    case '\b':
+                        // Backspace only works if cursor not at beginning of line
+                        if (state->cursor_position > 0) {
+                            // Shift all trailing character to the left
+                            ByteSize shift_size = state->input_buffer_size - state->cursor_position + 1;
+                            memmove(&state->input_buffer[state->cursor_position - 1], &state->input_buffer[state->cursor_position], shift_size);
+
+                            // Decrement input buffer size
+                            // Null terminate
+                            state->input_buffer[--state->input_buffer_size] = '\0';
+
+                            // Decrement cursor position
+                            --state->cursor_position;
+
+                            // Update command line to reflect change
+                            CommandModuleResult update_result = command_module_update_command_line();
+                            if (update_result != COMMAND_MODULE_SUCCESS) return update_result;
+                        }
+
+                        break;
+
+                    // -- NON-SPECIAL CHARACTERS -- //
+                    default:
+                        // Covering ASCII range for printable characters
+                        if ((ch >= 32 && ch <= 126) && (state->input_buffer_size < KYRA_LINE_MAX_LENGTH - 1)) {
+                            // Handle character insertion
+                            if (state->cursor_position < state->input_buffer_size) {
+                                // Shift all trailing characters to the right
+                                ByteSize shift_size = state->input_buffer_size - state->cursor_position + 1;
+                                memmove(&state->input_buffer[state->cursor_position + 1], &state->input_buffer[state->cursor_position], shift_size);
+                            }
+
+                            // Assign pressed key character
+                            // Advance cursor position
+                            state->input_buffer[state->cursor_position++] = ch;
+
+                            // Increment input buffer size
+                            // Null terminate
+                            state->input_buffer[++state->input_buffer_size] = '\0';
+
+                            // Update command line to reflect change
+                            CommandModuleResult update_result = command_module_update_command_line();
+                            if (update_result != COMMAND_MODULE_SUCCESS) return update_result;
+                        }
+
+                        break;
+                }
             }
         }
         
