@@ -161,23 +161,43 @@ KYRA_ENGINE_API LoggerResult logger_startup(ConstStr config_filepath) {
     {
         // Get file size
         ByteSize size = 0;
-        if (platform_filesystem_file_size(&config_file, &size) != FILESYSTEM_SUCCESS)
+        if (platform_filesystem_file_size(&config_file, &size) != FILESYSTEM_SUCCESS) {
+            // Close config file
+            if (platform_filesystem_file_close(&config_file) != FILESYSTEM_SUCCESS)
+                return LOGGER_ERROR_FAILED_TO_CLOSE_CONFIG_FILE;
+            
             return LOGGER_ERROR_FAILED_TO_GET_CONFIG_FILE_SIZE;
+        }
 
         // Allocate raw buffer
-        if (memory_zone_allocate("loggers", size, (VoidPtr *)&buffer, &buffer_memsize) != MEMORY_ZONE_SUCCESS)
+        if (memory_zone_allocate("loggers", size, (VoidPtr *)&buffer, &buffer_memsize) != MEMORY_ZONE_SUCCESS) {
+            // Close config file
+            if (platform_filesystem_file_close(&config_file) != FILESYSTEM_SUCCESS)
+                return LOGGER_ERROR_FAILED_TO_CLOSE_CONFIG_FILE;
+            
             return LOGGER_ERROR_FAILED_TO_ALLOCATE_MEMORY_FOR_CONFIG_RAW_BUFFER;
+        }
 
         // Read entire file data
         ByteSize read_bytes = 0;
-        if (platform_filesystem_read_all(&config_file, &read_bytes, &buffer) != FILESYSTEM_SUCCESS)
+        if (platform_filesystem_read_all(&config_file, &read_bytes, &buffer) != FILESYSTEM_SUCCESS) {
+            // Close config file
+            if (platform_filesystem_file_close(&config_file) != FILESYSTEM_SUCCESS)
+                return LOGGER_ERROR_FAILED_TO_CLOSE_CONFIG_FILE;
+            
+            // Deallocate raw buffer 
+            if (memory_zone_deallocate("loggers", (VoidPtr)buffer, buffer_memsize) != MEMORY_ZONE_SUCCESS)
+                return LOGGER_ERROR_FAILED_TO_DEALLOCATE_MEMORY_OF_CONFIG_RAW_BUFFER;
+
             return LOGGER_ERROR_FAILED_TO_READ_CONFIG_FILE;
+        }
         
         // Null-terminate
         buffer[read_bytes] = '\0';
 
-        // Close file
-        platform_filesystem_file_close(&config_file);
+        // Close config file
+        if (platform_filesystem_file_close(&config_file) != FILESYSTEM_SUCCESS)
+            return LOGGER_ERROR_FAILED_TO_CLOSE_CONFIG_FILE;
     }
 
     cJSON *json = NULL;
@@ -664,6 +684,7 @@ KYRA_ENGINE_API ConstStr logger_result_to_string(const LoggerResult result) {
         case LOGGER_ERROR_NOT_INITIALISED:                                              return "LOGGER_ERROR_NOT_INITIALISED";
         case LOGGER_ERROR_CONFIG_FILEPATH_NULL:                                         return "LOGGER_ERROR_CONFIG_FILEPATH_NULL";
         case LOGGER_ERROR_FAILED_TO_OPEN_CONFIG_FILE:                                   return "LOGGER_ERROR_FAILED_TO_OPEN_CONFIG_FILE";
+        case LOGGER_ERROR_FAILED_TO_CLOSE_CONFIG_FILE:                                  return "LOGGER_ERROR_FAILED_TO_CLOSE_CONFIG_FILE";
         case LOGGER_ERROR_FAILED_TO_GET_CONFIG_FILE_SIZE:                               return "LOGGER_ERROR_FAILED_TO_GET_CONFIG_FILE_SIZE";
         case LOGGER_ERROR_FAILED_TO_ALLOCATE_MEMORY_FOR_CONFIG_RAW_BUFFER:              return "LOGGER_ERROR_FAILED_TO_ALLOCATE_MEMORY_FOR_CONFIG_RAW_BUFFER";
         case LOGGER_ERROR_FAILED_TO_READ_CONFIG_FILE:                                   return "LOGGER_ERROR_FAILED_TO_READ_CONFIG_FILE";

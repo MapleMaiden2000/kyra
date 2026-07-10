@@ -15,6 +15,7 @@
 #include "kyra/core/logger/logger.h"
 #include "kyra/core/modules/input/input_module.h"
 #include "kyra/core/modules/command/command_module.h"
+#include "kyra/core/misc/timer/timer.h"
 #include "kyra/core/engine/commands.h"
 
 
@@ -299,12 +300,23 @@ KYRA_ENGINE_API EngineResult engine_preconstruct(ConstStr config_filepath) {
     return ENGINE_SUCCESS;
 }
 
-KYRA_ENGINE_API EngineResult engine_construct(void) {
+KYRA_ENGINE_API EngineResult engine_construct(ConstStr config_filepath) {
     if (!state) return ENGINE_CONSTRUCT_ERROR_STATE_NOT_INITIALISED;
 
-    KYRA_CONSOLE_PRINT_INFO("Constructing engine...");
+    KYRA_LOG_ENGINE_INFO("Constructing engine...");
     
-    KYRA_CONSOLE_PRINT_INFO("Engine constructed.");
+    // Timer
+    {
+        TimerResult timer_result = timer_startup(config_filepath); 
+        if (timer_result != TIMER_SUCCESS) {
+            KYRA_LOG_ENGINE_INFO("Timer startup failed (Error: %s).", timer_result_to_string(timer_result));
+
+            // Call for engine destruction
+            return engine_destruct();
+        }
+    }
+
+    KYRA_LOG_ENGINE_INFO("Engine constructed.");
 
     return ENGINE_SUCCESS;
 }
@@ -324,6 +336,11 @@ KYRA_ENGINE_API EngineResult engine_destruct(void) {
 
     KYRA_LOG_ENGINE_INFO("Destructing engine...");
     
+    // Timer shutdown
+    TimerResult timer_result = timer_shutdown();
+    if (timer_result != TIMER_SUCCESS)
+        KYRA_CONSOLE_PRINT_ERROR("Timer shutdown failed (Error: %s).", timer_result_to_string(timer_result));
+
     // Logger shutdown
     LoggerResult logger_result = logger_shutdown();
     if (logger_result != LOGGER_SUCCESS)

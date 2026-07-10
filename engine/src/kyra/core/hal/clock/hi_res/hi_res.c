@@ -91,7 +91,7 @@ KYRA_ENGINE_API ClockResult clock_hires_elapsed_milliseconds(const HiResClock hi
 
         // Convert to milliseconds
         // Save to ref
-        if (*out_milliseconds) *out_milliseconds = seconds * SECOND_TO_MILLISECOND;
+        if (out_milliseconds) *out_milliseconds = seconds * SECOND_TO_MILLISECOND;
     }
 
     return elapsed_result;
@@ -106,7 +106,7 @@ KYRA_ENGINE_API ClockResult clock_hires_elapsed_microseconds(const HiResClock hi
 
         // Convert to microseconds
         // Save to ref
-        if (*out_microseconds) *out_microseconds = seconds * SECOND_TO_MICROSECOND;
+        if (out_microseconds) *out_microseconds = seconds * SECOND_TO_MICROSECOND;
     }
 
     return elapsed_result;
@@ -121,7 +121,7 @@ KYRA_ENGINE_API ClockResult clock_hires_elapsed_nanoseconds(const HiResClock hir
 
         // Convert to nanoseconds
         // Save to ref
-        if (*out_nanoseconds) *out_nanoseconds = seconds * SECOND_TO_NANOSECOND;
+        if (out_nanoseconds) *out_nanoseconds = seconds * SECOND_TO_NANOSECOND;
     }
 
     return elapsed_result;

@@ -17,7 +17,7 @@ Int32 main(Int32 argc, Str *argv) {
         if (engine_result != ENGINE_SUCCESS) return (Int32)engine_result;
         
         // Construction stage
-        engine_result = engine_construct();
+        engine_result = engine_construct(engine_config_filepath);
         if (engine_result != ENGINE_SUCCESS) return (Int32)engine_result;
     }
 
@@ -55,12 +55,18 @@ Int32 main(Int32 argc, Str *argv) {
                 // Reset for next frame
                 clock_hires_split(&clock);
 
+                // Update timer system
+                timer_update(elapsed);
+
+                // Get the scaled game delta time for the update loops
+                Flt32 game_dt = (Flt32)timer_get_game_delta_time();
+
                 // Update input module
                 input_module_update();
 
                 // Update engine
                 {
-                    engine_result = engine_update((Flt32)elapsed);
+                    engine_result = engine_update(game_dt);
                     if (engine_result != ENGINE_SUCCESS) return (Int32)engine_result;
                 }
 
@@ -77,7 +83,7 @@ Int32 main(Int32 argc, Str *argv) {
                 }
 
                 // Application update
-                if (app->on_update) app->on_update(app, (Flt32)elapsed);
+                if (app->on_update) app->on_update(app, game_dt);
             }
         }
 

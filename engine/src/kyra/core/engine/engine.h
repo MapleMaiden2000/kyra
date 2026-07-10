@@ -46,7 +46,7 @@ typedef struct Engine_Config {
 // API functions -------------------------------------------------------- //
 
 KYRA_ENGINE_API EngineResult    engine_preconstruct(ConstStr config_filepath);
-KYRA_ENGINE_API EngineResult    engine_construct(void);
+KYRA_ENGINE_API EngineResult    engine_construct(ConstStr config_filepath);
 KYRA_ENGINE_API EngineResult    engine_update(Flt32 delta_time);
 KYRA_ENGINE_API EngineResult    engine_destruct(void);
 

@@ -21,6 +21,7 @@
             "platform": "64 KB",
             "input": "32 KB",
             "command": "256 KB",
+            "runtime": "64 KB",
             "editor": "128 KB"
         }
     },
@@ -30,5 +31,9 @@
         "echo_prompt": true,
         "max_arguments": 16,
         "token_max_length": 256
+    },
+
+    "runtime": {
+        "max_active_timers": 128
     }
 }
